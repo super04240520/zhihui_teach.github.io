@@ -3,1490 +3,738 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>学生信息监控大屏</title>
+<title>直播入职综合评估大屏</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg:       #06111f;
-  --s1:       #0b1a2e;
-  --s2:       #0f2040;
-  --amber:    #f59e0b;
-  --amber2:   #fbbf24;
-  --cyan:     #22d3ee;
-  --rose:     #fb7185;
-  --green:    #4ade80;
-  --violet:   #a78bfa;
-  --text:     #dce9ff;
-  --dim:      rgba(220,233,255,0.42);
-  --border:   rgba(255,255,255,0.06);
-}
-
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-html, body {
-  width:100%; height:100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
-  font-size: 14px;
-  overflow-x: hidden;
-}
-
-/* ── Atmosphere ── */
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background:
-    radial-gradient(ellipse 60% 40% at 15% 10%, rgba(245,158,11,.055) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(34,211,238,.055) 0%, transparent 55%);
-  pointer-events:none; z-index:0;
-}
-body::after {
-  content:'';
-  position:fixed; inset:0;
-  background-image:
-    radial-gradient(circle, rgba(245,158,11,.04) 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events:none; z-index:0;
-}
-
-/* ── Layout ── */
-.screen {
-  position:relative; z-index:1;
-  min-height:100vh;
-  display:grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap:0;
-  padding: 0 16px 16px;
-}
-
-/* ── Header ── */
-.header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 14px 4px 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-
-.header-left {
-  display:flex; align-items:center; gap:14px;
-}
-
-.header-logo {
-  width:38px; height:38px;
-  border-radius:8px;
-  background: linear-gradient(135deg, rgba(245,158,11,.3), rgba(34,211,238,.2));
-  border: 1px solid rgba(245,158,11,.4);
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.3rem;
-}
-
-.header-title-main {
-  font-family:'Rajdhani',sans-serif;
-  font-size:1.3rem; font-weight:700;
-  letter-spacing:.08em;
-  color: var(--amber);
-  text-shadow: 0 0 20px rgba(245,158,11,.4);
-  text-transform:uppercase;
-}
-
-.header-title-sub {
-  font-size:.72rem;
-  color: var(--dim);
-  letter-spacing:.1em;
-  margin-top:2px;
-}
-
-.header-center {
-  display:flex; align-items:center; gap:24px;
-}
-
-.class-filter {
-  display:flex; gap:8px;
-}
-
-.filter-btn {
-  padding: 6px 16px;
-  border-radius:6px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: transparent;
-  color: var(--dim);
-  font-family:inherit; font-size:.78rem;
-  cursor:pointer;
-  transition: all .18s;
-}
-.filter-btn.active, .filter-btn:hover {
-  border-color: rgba(245,158,11,.5);
-  color: var(--amber);
-  background: rgba(245,158,11,.07);
-}
-
-.header-right {
-  text-align:right;
-}
-
-.clock-time {
-  font-family:'Rajdhani',sans-serif;
-  font-size:1.6rem; font-weight:700;
-  color: var(--amber2);
-  text-shadow: 0 0 16px rgba(251,191,36,.35);
-  letter-spacing:.05em;
-  line-height:1;
-}
-
-.clock-date {
-  font-size:.72rem;
-  color: var(--dim);
-  letter-spacing:.1em;
-  margin-top:3px;
-}
-
-/* ── KPI Row ── */
-.kpi-row {
-  display:grid;
-  grid-template-columns: repeat(4,1fr);
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.kpi-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-top: 2px solid;
-  border-radius:12px;
-  padding: 16px 20px;
-  display:flex; align-items:center; gap:16px;
-  position:relative; overflow:hidden;
-  cursor:default;
-  transition: box-shadow .2s;
-}
-.kpi-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,.4); }
-
-.kpi-card::before {
-  content:'';
-  position:absolute; inset:0;
-  background: linear-gradient(135deg, rgba(255,255,255,.025) 0%, transparent 60%);
-  pointer-events:none;
-}
-
-.kpi-card.amber { border-top-color: var(--amber); }
-.kpi-card.cyan  { border-top-color: var(--cyan); }
-.kpi-card.green { border-top-color: var(--green); }
-.kpi-card.rose  { border-top-color: var(--rose); }
-
-.kpi-icon {
-  width:44px; height:44px;
-  border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.3rem; flex-shrink:0;
-}
-.amber .kpi-icon { background:rgba(245,158,11,.12); }
-.cyan  .kpi-icon { background:rgba(34,211,238,.1); }
-.green .kpi-icon { background:rgba(74,222,128,.1); }
-.rose  .kpi-icon { background:rgba(251,113,133,.1); }
-
-.kpi-body {}
-.kpi-label {
-  font-size:.65rem;
-  color: var(--dim);
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  margin-bottom:4px;
-}
-.kpi-value {
-  font-family:'Rajdhani',sans-serif;
-  font-size:2rem; font-weight:700;
-  line-height:1;
-}
-.amber .kpi-value { color:var(--amber); text-shadow:0 0 18px rgba(245,158,11,.4); }
-.cyan  .kpi-value { color:var(--cyan);  text-shadow:0 0 18px rgba(34,211,238,.4); }
-.green .kpi-value { color:var(--green); text-shadow:0 0 18px rgba(74,222,128,.4); }
-.rose  .kpi-value { color:var(--rose);  text-shadow:0 0 18px rgba(251,113,133,.4); }
-
-.kpi-badge {
-  font-size:.65rem;
-  color:var(--dim);
-  margin-top:3px;
-}
-.kpi-badge.up   { color:#4ade80; }
-.kpi-badge.down { color:#fb7185; }
-
-/* ── Main Grid ── */
-.main-grid {
-  display:grid;
-  grid-template-columns: 1.8fr 1.4fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap:12px;
-  min-height:0;
-}
-
-/* ── Panel ── */
-.panel {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  min-height:0;
-}
-
-.panel.span-col2 { grid-column: span 2; }
-.panel.span-row2 { grid-row: span 2; }
-
-.panel-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 12px 18px 10px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink:0;
-}
-
-.panel-title {
-  font-size:.78rem;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  display:flex; align-items:center; gap:8px;
-}
-
-.panel-dot {
-  width:7px; height:7px;
-  border-radius:50%;
-  flex-shrink:0;
-}
-
-.dot-amber  { background:var(--amber); box-shadow:0 0 6px var(--amber); }
-.dot-cyan   { background:var(--cyan);  box-shadow:0 0 6px var(--cyan); }
-.dot-green  { background:var(--green); box-shadow:0 0 6px var(--green); }
-.dot-rose   { background:var(--rose);  box-shadow:0 0 6px var(--rose); }
-.dot-violet { background:var(--violet);box-shadow:0 0 6px var(--violet); }
-
-.panel-hint {
-  font-size:.62rem;
-  color:var(--dim);
-  letter-spacing:.05em;
-}
-
-.panel-body {
-  flex:1;
-  padding: 12px 16px;
-  min-height:0;
-  position:relative;
-}
-
-.chart-wrap {
-  position:relative;
-  width:100%; height:100%;
-  min-height:0;
-}
-
-/* Clickable overlay hint */
-.panel[data-clickable] .panel-hint::after {
-  content:'· 可点击';
-  color: rgba(245,158,11,.6);
-  margin-left:6px;
-}
-
-/* ── Attention List ── */
-.attn-list {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  padding: 10px 14px;
-  overflow-y:auto;
-  flex:1;
-}
-
-.attn-item {
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding: 10px 14px;
-  border-radius:9px;
-  background: var(--s2);
-  border: 1px solid var(--border);
-  cursor:pointer;
-  transition: all .18s;
-}
-.attn-item:hover {
-  border-color: rgba(251,113,133,.35);
-  background: rgba(251,113,133,.05);
-}
-
-.attn-avatar {
-  width:32px; height:32px;
-  border-radius:50%;
-  background: linear-gradient(135deg, rgba(251,113,133,.3), rgba(167,139,250,.2));
-  border: 1px solid rgba(251,113,133,.35);
-  display:flex; align-items:center; justify-content:center;
-  font-size:.8rem; font-weight:700;
-  color:var(--rose);
-  flex-shrink:0;
-}
-
-.attn-info { flex:1; min-width:0; }
-.attn-name { font-weight:700; font-size:.82rem; }
-.attn-desc { font-size:.65rem; color:var(--dim); margin-top:2px; }
-
-.attn-tag {
-  font-size:.6rem;
-  padding: 3px 8px;
-  border-radius:20px;
-  border: 1px solid;
-  white-space:nowrap;
-}
-.tag-drop  { border-color:rgba(251,113,133,.4); color:var(--rose); background:rgba(251,113,133,.08); }
-.tag-absen { border-color:rgba(245,158,11,.4);  color:var(--amber);background:rgba(245,158,11,.08); }
-.tag-low   { border-color:rgba(167,139,250,.4); color:var(--violet);background:rgba(167,139,250,.08); }
-
-/* ── Activity Feed ── */
-.feed-list {
-  display:flex;
-  flex-direction:column;
-  gap:0;
-  padding: 6px 14px 10px;
-  overflow-y:auto;
-  flex:1;
-}
-
-.feed-item {
-  display:flex;
-  gap:12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  align-items:flex-start;
-  animation: fadeSlide .4s ease both;
-}
-.feed-item:last-child { border-bottom:none; }
-
-@keyframes fadeSlide {
-  from { opacity:0; transform:translateX(-8px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-
-.feed-dot {
-  width:8px; height:8px;
-  border-radius:50%;
-  margin-top:5px;
-  flex-shrink:0;
-}
-
-.feed-text {
-  font-size:.75rem;
-  line-height:1.45;
-  color: var(--text);
-}
-.feed-text strong { color:var(--amber2); }
-.feed-time {
-  font-size:.62rem;
-  color:var(--dim);
-  margin-top:2px;
-}
-
-/* ── Subject mini stats ── */
-.subject-mini {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  padding: 8px 16px 12px;
-}
-
-.subject-row {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.subject-name {
-  width:32px;
-  font-size:.72rem;
-  color:var(--dim);
-  flex-shrink:0;
-  text-align:right;
-}
-.subject-bar-bg {
-  flex:1;
-  height:8px;
-  background:rgba(255,255,255,.06);
-  border-radius:4px;
-  overflow:hidden;
-}
-.subject-bar-fill {
-  height:100%;
-  border-radius:4px;
-  transition: width 1s cubic-bezier(.34,1.56,.64,1);
-}
-.subject-score {
-  font-family:'Rajdhani',sans-serif;
-  font-size:.85rem; font-weight:700;
-  width:32px;
-  text-align:right;
-}
-
-/* ── Modal ── */
-.modal-overlay {
-  display:none;
-  position:fixed; inset:0;
-  background:rgba(3,8,18,.88);
-  backdrop-filter:blur(14px);
-  z-index:1000;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-}
-.modal-overlay.open { display:flex; }
-
-.modal-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--amber);
-  border-radius:18px;
-  width:100%;
-  max-width:640px;
-  max-height:85vh;
-  overflow-y:auto;
-  box-shadow:0 40px 80px rgba(0,0,0,.9), 0 0 50px rgba(245,158,11,.07);
-  animation: modalPop .22s cubic-bezier(.2,.9,.4,1.1);
-}
-
-@keyframes modalPop {
-  from { transform:scale(.9) translateY(12px); opacity:0; }
-  to   { transform:scale(1) translateY(0);     opacity:1; }
-}
-
-.modal-head {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.modal-title {
-  font-size:1.05rem;
-  font-weight:700;
-  color:var(--text);
-}
-.modal-sub {
-  font-size:.72rem;
-  color:var(--dim);
-  margin-top:3px;
-}
-
-.modal-close {
-  width:32px; height:32px;
-  border-radius:8px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--border);
-  color:var(--dim);
-  cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1rem;
-  transition: all .15s;
-}
-.modal-close:hover {
-  color:var(--text);
-  border-color:rgba(251,113,133,.4);
-  background:rgba(251,113,133,.08);
-}
-
-.modal-body { padding: 20px 24px 24px; }
-
-.modal-section-title {
-  font-size:.65rem;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:var(--dim);
-  margin-bottom:12px;
-  margin-top:20px;
-}
-.modal-section-title:first-child { margin-top:0; }
-
-.student-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
-  gap:10px;
-}
-
-.student-card {
-  background:var(--s2);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:12px 14px;
-  cursor:pointer;
-  transition: all .18s;
-}
-.student-card:hover {
-  border-color:rgba(245,158,11,.35);
-  background:rgba(245,158,11,.04);
-}
-
-.sc-name { font-weight:700; font-size:.88rem; margin-bottom:4px; }
-.sc-cls  { font-size:.65rem; color:var(--dim); }
-.sc-score {
-  font-family:'Rajdhani',sans-serif;
-  font-size:1.4rem; font-weight:700;
-  line-height:1;
-  margin-top:8px;
-}
-
-.profile-header {
-  display:flex; align-items:center; gap:18px;
-  margin-bottom:20px;
-}
-
-.profile-avatar {
-  width:56px; height:56px;
-  border-radius:50%;
-  background:linear-gradient(135deg, rgba(245,158,11,.3), rgba(34,211,238,.2));
-  border:2px solid rgba(245,158,11,.4);
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.4rem; font-weight:700;
-  color:var(--amber);
-  flex-shrink:0;
-}
-
-.profile-info-name { font-size:1.2rem; font-weight:700; }
-.profile-info-meta { font-size:.72rem; color:var(--dim); margin-top:4px; }
-
-.profile-tags {
-  display:flex; gap:6px; flex-wrap:wrap;
-  margin-top:8px;
-}
-
-.tag-small {
-  font-size:.6rem;
-  padding:2px 8px;
-  border-radius:12px;
-  border:1px solid;
-}
-
-.score-trend {
-  display:flex; gap:8px; align-items:flex-end;
-  height:60px;
-  margin-bottom:16px;
-}
-
-.trend-bar-wrap {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-end;
-  gap:4px;
-}
-
-.trend-bar {
-  width:100%;
-  border-radius:3px 3px 0 0;
-  transition: height .6s ease;
-  min-height:4px;
-}
-
-.trend-label {
-  font-size:.58rem;
-  color:var(--dim);
-}
-
-.trend-val {
-  font-family:'Rajdhani',sans-serif;
-  font-size:.75rem;
-  font-weight:700;
-}
-
-.stats-row {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:4px;
-}
-
-.stat-mini {
-  background:var(--s2);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:10px 12px;
-  text-align:center;
-}
-.stat-mini-label { font-size:.6rem; color:var(--dim); }
-.stat-mini-val {
-  font-family:'Rajdhani',sans-serif;
-  font-size:1.4rem; font-weight:700;
-  line-height:1.2;
-}
-
-/* month-list in modal */
-.month-table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:.8rem;
-}
-.month-table th {
-  text-align:left;
-  padding:8px 12px;
-  font-size:.62rem;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--dim);
-  border-bottom:1px solid var(--border);
-}
-.month-table td {
-  padding:10px 12px;
-  border-bottom:1px solid var(--border);
-}
-.month-table tr:last-child td { border-bottom:none; }
-.month-table tr:hover td { background:rgba(255,255,255,.02); }
-
-.rank-badge {
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:12px;
-  font-size:.65rem;
-  font-weight:700;
-  font-family:'Rajdhani',sans-serif;
-}
-
-/* scrollbar */
-::-webkit-scrollbar { width:4px; height:4px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:2px; }
-
-/* ── Footer ── */
-.footer {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 10px 4px 0;
-  border-top: 1px solid var(--border);
-  margin-top: 14px;
-  font-size:.62rem;
-  color:var(--dim);
-  letter-spacing:.08em;
-}
-
-.footer-indicators {
-  display:flex; gap:16px;
-}
-
-.indicator {
-  display:flex; align-items:center; gap:6px;
-}
-
-.ind-dot {
-  width:6px; height:6px;
-  border-radius:50%;
-}
-
-/* ── Responsive note ── */
-@media (max-width:900px) {
-  .main-grid {
-    grid-template-columns:1fr 1fr;
-    grid-template-rows:auto;
-  }
-  .panel.span-col2 { grid-column:span 2; }
-  .panel.span-row2 { grid-row:span 1; }
-  .kpi-row { grid-template-columns:repeat(2,1fr); }
-}
+:root{
+  --bg:#020b16;--s1:#071525;--s2:#0c1e35;
+  --cyan:#00e5ff;--amber:#f59e0b;--rose:#f43f5e;
+  --green:#10b981;--violet:#8b5cf6;--blue:#3b82f6;--teal:#14b8a6;
+  --text:#cde8ff;--dim:rgba(180,220,255,0.4);--bdr:rgba(0,229,255,0.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
+  font-family:'PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
+  font-size:13px;overflow:hidden;}
+
+#neuralBg{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);}
+
+.corner{position:fixed;width:52px;height:52px;pointer-events:none;z-index:2;}
+.corner::before,.corner::after{content:'';position:absolute;background:var(--cyan);}
+.corner-tl{top:10px;left:10px;}.corner-tr{top:10px;right:10px;}
+.corner-bl{bottom:10px;left:10px;}
+.corner-tl::before,.corner-tr::before,.corner-bl::before{top:0;left:0;width:2px;height:20px;}
+.corner-tl::after,.corner-tr::after,.corner-bl::after{top:0;left:0;width:20px;height:2px;}
+.corner-tr::before{left:auto;right:0;}.corner-tr::after{left:auto;right:0;}
+.corner-bl::before{top:auto;bottom:0;}.corner-bl::after{top:auto;bottom:0;}
+
+.screen{position:relative;z-index:3;height:100vh;display:grid;
+  grid-template-rows:auto 1fr auto;padding:12px 16px 10px;gap:0;}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;
+  padding:0 4px 10px;border-bottom:1px solid var(--bdr);margin-bottom:10px;gap:10px;}
+.hd-brand{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.hd-icon{width:40px;height:40px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(139,92,246,.1));
+  border:1px solid rgba(0,229,255,.3);display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;box-shadow:0 0 14px rgba(0,229,255,.18);}
+.hd-title{font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:900;
+  color:var(--cyan);letter-spacing:.1em;text-shadow:0 0 16px rgba(0,229,255,.5);
+  animation:glitch 9s infinite;}
+@keyframes glitch{0%,92%,100%{text-shadow:0 0 16px rgba(0,229,255,.5);}
+  93%{text-shadow:-2px 0 rgba(244,63,94,.8),2px 0 var(--cyan);transform:translateX(1px);}
+  94%{text-shadow:2px 0 rgba(244,63,94,.8),-2px 0 var(--cyan);transform:translateX(-1px);}
+  95%{text-shadow:0 0 16px rgba(0,229,255,.5);transform:none;}}
+.hd-sub{font-size:.6rem;color:var(--dim);letter-spacing:.1em;margin-top:2px;}
+.live-badge{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;
+  border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.07);
+  font-size:.58rem;letter-spacing:.1em;font-weight:700;color:var(--green);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:livePulse 1.3s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7);}50%{box-shadow:0 0 0 5px rgba(16,185,129,0);}}
+
+/* Student Picker */
+.stu-picker{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:nowrap;overflow-x:auto;}
+.stu-btn{display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:8px;
+  border:1px solid rgba(0,229,255,.15);background:rgba(0,229,255,.04);
+  cursor:pointer;transition:all .18s;gap:2px;min-width:56px;flex-shrink:0;}
+.stu-btn:hover{border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.09);}
+.stu-btn.active{border-color:rgba(0,229,255,.7);background:rgba(0,229,255,.13);
+  box-shadow:0 0 12px rgba(0,229,255,.18);}
+.stu-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.7rem;font-weight:700;
+  background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(139,92,246,.12));
+  border:1px solid rgba(0,229,255,.3);color:var(--cyan);font-family:'Orbitron',sans-serif;}
+.stu-name-sm{font-size:.55rem;color:var(--dim);white-space:nowrap;}
+.stu-score-sm{font-family:'Orbitron',sans-serif;font-size:.58rem;font-weight:700;color:var(--cyan);}
+.stu-btn.active .stu-name-sm{color:var(--text);}
+
+.hd-right{text-align:right;flex-shrink:0;}
+.clock-time{font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:700;
+  color:var(--cyan);text-shadow:0 0 14px rgba(0,229,255,.4);letter-spacing:.06em;line-height:1;}
+.clock-date{font-size:.6rem;color:var(--dim);letter-spacing:.08em;margin-top:3px;}
+
+/* Grid */
+.eval-grid{display:grid;grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);gap:9px;min-height:0;}
+
+/* Panel */
+.panel{background:var(--s1);border:1px solid var(--bdr);border-radius:9px;
+  display:flex;flex-direction:column;overflow:hidden;min-height:0;position:relative;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3;}
+
+.ph{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px 6px;border-bottom:1px solid var(--bdr);flex-shrink:0;}
+.pt{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;}
+.pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.pd-cyan{background:var(--cyan);box-shadow:0 0 5px var(--cyan);}
+.pd-blue{background:var(--blue);box-shadow:0 0 5px var(--blue);}
+.pd-violet{background:var(--violet);box-shadow:0 0 5px var(--violet);}
+.pd-amber{background:var(--amber);box-shadow:0 0 5px var(--amber);}
+.pd-green{background:var(--green);box-shadow:0 0 5px var(--green);}
+.pd-teal{background:var(--teal);box-shadow:0 0 5px var(--teal);}
+
+.score-chip{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;
+  padding:2px 9px;border-radius:20px;border:1px solid;transition:all .3s;}
+.sc-cyan{color:var(--cyan);border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.07);}
+.sc-blue{color:var(--blue);border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.07);}
+.sc-violet{color:var(--violet);border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.07);}
+.sc-amber{color:var(--amber);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.07);}
+.sc-green{color:var(--green);border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.07);}
+.sc-teal{color:var(--teal);border-color:rgba(20,184,166,.35);background:rgba(20,184,166,.07);}
+.sc-gold{color:#fbbf24;border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.09);}
+
+.pb{flex:1;display:flex;flex-direction:column;min-height:0;padding:8px 10px 6px;}
+.cw{flex:1;position:relative;min-height:0;}
+.cw canvas{position:absolute;inset:0;width:100%!important;height:100%!important;}
+
+.donut-wrap{position:relative;flex:1;min-height:0;}
+.donut-wrap canvas{position:absolute;inset:0;width:100%!important;height:100%!important;}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+.dc-score{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:700;
+  color:var(--amber);text-shadow:0 0 14px rgba(245,158,11,.45);line-height:1;}
+.dc-max{font-size:.6rem;color:var(--dim);margin-top:2px;}
+
+.gauge-wrap{flex:1;min-height:0;position:relative;}
+.gauge-wrap canvas{display:block;width:100%!important;height:100%!important;}
+
+.sub-list{display:flex;flex-direction:column;gap:4px;margin-top:6px;flex-shrink:0;}
+.sub-row{display:flex;align-items:center;gap:6px;}
+.sub-name{font-size:.58rem;color:var(--dim);flex-shrink:0;white-space:nowrap;
+  width:72px;text-align:right;overflow:hidden;text-overflow:ellipsis;}
+.sub-bg{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.sub-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.34,1.56,.64,1);}
+.sub-val{font-family:'Orbitron',sans-serif;font-size:.58rem;font-weight:700;flex-shrink:0;width:38px;text-align:right;}
+
+.big-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:4px 0;}
+.big-score{font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;
+  color:var(--amber);text-shadow:0 0 22px rgba(245,158,11,.5);line-height:1;}
+.big-max{font-size:.72rem;color:var(--dim);letter-spacing:.08em;}
+.big-sub{display:flex;flex-direction:column;gap:5px;width:100%;margin-top:4px;}
+.big-sub-row{display:flex;align-items:center;gap:7px;}
+.big-sub-name{font-size:.6rem;color:var(--dim);flex:1;}
+.big-sub-score{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;color:var(--amber);}
+
+.total-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;}
+.total-ring{position:relative;width:110px;height:110px;flex-shrink:0;}
+.total-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.07);stroke-width:8;}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.2s ease;}
+.total-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.total-num{font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:900;
+  color:var(--cyan);text-shadow:0 0 18px rgba(0,229,255,.5);line-height:1;}
+.total-denom{font-size:.6rem;color:var(--dim);margin-top:1px;}
+.total-label{font-family:'Orbitron',sans-serif;font-size:.6rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;opacity:.8;}
+.total-grade{font-size:.72rem;font-weight:700;margin-top:2px;letter-spacing:.06em;}
+.module-pills{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:6px;}
+.mpill{font-size:.52rem;padding:2px 6px;border-radius:8px;border:1px solid;white-space:nowrap;}
+
+.footer{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 4px 0;border-top:1px solid var(--bdr);margin-top:9px;
+  font-size:.58rem;color:var(--dim);letter-spacing:.06em;}
+.foot-mods{display:flex;gap:12px;}
+.fm{display:flex;align-items:center;gap:4px;}
+.fm-dot{width:5px;height:5px;border-radius:50%;}
+
+/* AI Mascot */
+.ai-mascot-wrap{position:fixed;bottom:24px;right:24px;z-index:500;
+  display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+.mascot-outer{width:64px;height:64px;border-radius:50%;position:relative;animation:mFloat 3.5s ease-in-out infinite;}
+@keyframes mFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.mring{position:absolute;inset:-5px;border-radius:50%;border:1px dashed rgba(0,229,255,.3);animation:mSpin 6s linear infinite;}
+@keyframes mSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.mring-dot{position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan);}
+.mbody{width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#0f2a44,#061624);
+  border:2px solid rgba(0,229,255,.45);
+  box-shadow:0 0 20px rgba(0,229,255,.28),0 0 50px rgba(0,229,255,.08);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.mbody::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(155deg,rgba(0,229,255,.08),transparent 55%);border-radius:50%;}
+.rface{width:38px;height:36px;background:linear-gradient(155deg,#0e2236,#071525);
+  border-radius:7px;border:1px solid rgba(0,229,255,.28);
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+.rface::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:2px;height:8px;background:rgba(0,229,255,.65);}
+.rface::after{content:'';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan);animation:ablink 2s ease-in-out infinite;}
+@keyframes ablink{0%,100%{opacity:1;}50%{opacity:.35;}}
+.reyes{display:flex;gap:6px;}
+.reye{width:8px;height:6px;background:var(--cyan);border-radius:2px;box-shadow:0 0 7px var(--cyan);animation:epulse 2.4s ease-in-out infinite;}
+.reye.r{animation-delay:.4s;}
+@keyframes epulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.rmouth{width:16px;height:2px;background:rgba(0,229,255,.55);border-radius:1px;}
+.rai{position:absolute;bottom:0;left:0;right:0;text-align:center;
+  font-family:'Orbitron',sans-serif;font-size:.3rem;font-weight:700;color:rgba(0,229,255,.45);letter-spacing:.18em;}
+.mlabel{font-family:'Orbitron',sans-serif;font-size:.52rem;font-weight:700;
+  color:var(--cyan);letter-spacing:.12em;text-shadow:0 0 9px rgba(0,229,255,.45);}
+
+/* AI Panel */
+.ai-panel{position:fixed;bottom:108px;right:24px;width:278px;
+  background:var(--s1);border:1px solid rgba(0,229,255,.22);border-top:2px solid var(--cyan);
+  border-radius:13px;box-shadow:0 22px 55px rgba(0,0,0,.85),0 0 38px rgba(0,229,255,.07);
+  z-index:499;transform:translateY(14px) scale(.97);opacity:0;pointer-events:none;
+  transition:all .24s cubic-bezier(.2,.9,.4,1.1);overflow:hidden;}
+.ai-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
+.aph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid var(--bdr);}
+.apt{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;
+  color:var(--cyan);letter-spacing:.1em;display:flex;align-items:center;gap:6px;}
+.ath{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:livePulse 1s ease-in-out infinite;}
+.apc{width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,.04);
+  border:1px solid var(--bdr);color:var(--dim);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:.75rem;transition:all .15s;}
+.apc:hover{color:var(--text);border-color:rgba(244,63,94,.35);}
+.api-list{padding:8px 12px 12px;display:flex;flex-direction:column;gap:7px;}
+.api{display:flex;gap:8px;padding:8px 10px;background:var(--s2);
+  border:1px solid var(--bdr);border-radius:7px;font-size:.68rem;line-height:1.5;}
+.api-ico{font-size:.85rem;flex-shrink:0;margin-top:1px;}
+.apt-tag{font-size:.5rem;padding:1px 5px;border-radius:7px;border:1px solid;display:inline-block;margin-bottom:2px;}
+.tg-w{border-color:rgba(244,63,94,.4);color:var(--rose);background:rgba(244,63,94,.07);}
+.tg-g{border-color:rgba(16,185,129,.4);color:var(--green);background:rgba(16,185,129,.07);}
+.tg-p{border-color:rgba(139,92,246,.4);color:var(--violet);background:rgba(139,92,246,.07);}
+.tg-i{border-color:rgba(0,229,255,.3);color:var(--cyan);background:rgba(0,229,255,.06);}
+.apf{padding:6px 12px;border-top:1px solid var(--bdr);font-size:.57rem;color:var(--dim);text-align:center;letter-spacing:.05em;}
+
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(0,229,255,.18);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<div class="screen">
+<canvas id="neuralBg"></canvas>
+<div class="scanlines"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
 
-  <!-- Header -->
+<div class="screen">
   <div class="header">
-    <div class="header-left">
-      <div class="header-logo">🎓</div>
+    <div class="hd-brand">
+      <div class="hd-icon">🎬</div>
       <div>
-        <div class="header-title-main">Student Monitor</div>
-        <div class="header-title-sub">学生综合信息监控平台 · 高一年级</div>
+        <div class="hd-title">LIVE · AI 入职综合评估系统</div>
+        <div class="hd-sub">直播带货入职培训 · 学员综合能力评估档案 · 2024-01期</div>
       </div>
+      <div class="live-badge" style="margin-left:14px"><div class="live-dot"></div>EVAL</div>
     </div>
-    <div class="header-center">
-      <div class="class-filter">
-        <button class="filter-btn active" data-class="全部">全部</button>
-        <button class="filter-btn" data-class="高一(1)班">1班</button>
-        <button class="filter-btn" data-class="高一(2)班">2班</button>
-      </div>
-    </div>
-    <div class="header-right">
+    <div class="stu-picker" id="stuPicker"></div>
+    <div class="hd-right">
       <div class="clock-time" id="clockTime">--:--:--</div>
       <div class="clock-date" id="clockDate">----年--月--日</div>
     </div>
   </div>
 
-  <!-- KPI Row -->
-  <div class="kpi-row">
-    <div class="kpi-card amber">
-      <div class="kpi-icon">👥</div>
-      <div class="kpi-body">
-        <div class="kpi-label">在籍学生</div>
-        <div class="kpi-value" id="kpiTotal">0</div>
-        <div class="kpi-badge">本学期总人数</div>
+  <div class="eval-grid">
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-cyan"></div>M1 · 课前学习习惯</div><div class="score-chip sc-cyan" id="chip1"></div></div>
+      <div class="pb">
+        <div class="donut-wrap"><canvas id="chartM1"></canvas>
+          <div class="donut-center"><div class="dc-score" id="dc1"></div><div class="dc-max">/ 10 分</div></div>
+        </div>
+        <div class="sub-list" id="subM1"></div>
       </div>
     </div>
-    <div class="kpi-card cyan">
-      <div class="kpi-icon">📊</div>
-      <div class="kpi-body">
-        <div class="kpi-label">本月平均分</div>
-        <div class="kpi-value" id="kpiAvg">0</div>
-        <div class="kpi-badge up" id="kpiAvgBadge">↑ vs 上月</div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-blue"></div>M2 · 课堂参与表现</div><div class="score-chip sc-blue" id="chip2"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM2"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-amber"></div>M8 · 综合直播项目成果</div><div class="score-chip sc-gold" id="chip8"></div></div>
+      <div class="pb">
+        <div class="big-card">
+          <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;margin-bottom:2px">项目综合得分</div>
+          <div class="big-score" id="bigScore"></div>
+          <div class="big-max" id="bigLabel"></div>
+          <div class="big-sub" style="margin-top:10px" id="bigSub"></div>
+        </div>
       </div>
     </div>
-    <div class="kpi-card green">
-      <div class="kpi-icon">✅</div>
-      <div class="kpi-body">
-        <div class="kpi-label">出勤率</div>
-        <div class="kpi-value" id="kpiAttend">0%</div>
-        <div class="kpi-badge" id="kpiAttendBadge">本月统计</div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-violet"></div>M3 · 理论知识掌握</div><div class="score-chip sc-violet" id="chip3"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM3"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-amber"></div>M4 · 直播设计能力</div><div class="score-chip sc-amber" id="chip4"></div></div>
+      <div class="pb">
+        <div class="cw"><canvas id="chartM4"></canvas></div>
+        <div class="sub-list" style="margin-top:4px" id="subM4"></div>
       </div>
     </div>
-    <div class="kpi-card rose">
-      <div class="kpi-icon">⚠️</div>
-      <div class="kpi-body">
-        <div class="kpi-label">需关注学生</div>
-        <div class="kpi-value" id="kpiAlert">0</div>
-        <div class="kpi-badge">成绩下降 / 出勤异常</div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-violet"></div>M7 · AI 与创新应用</div><div class="score-chip sc-violet" id="chip7"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM7"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-green"></div>M5 · 直播实操表现</div><div class="score-chip sc-green" id="chip5"></div></div>
+      <div class="pb">
+        <div class="gauge-wrap"><canvas id="chartM5"></canvas></div>
+        <div class="sub-list" id="subM5"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-teal"></div>M6 · 复盘优化能力</div><div class="score-chip sc-teal" id="chip6"></div></div>
+      <div class="pb">
+        <div class="cw"><canvas id="chartM6"></canvas></div>
+        <div class="sub-list" style="margin-top:4px" id="subM6"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-cyan"></div>综合总分汇总</div><div class="score-chip sc-cyan" id="chipTotal"></div></div>
+      <div class="pb">
+        <div class="total-card">
+          <div class="total-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="45"/>
+              <circle class="ring-fill" id="totalRing" cx="50" cy="50" r="45" stroke="url(#ringGrad)"/>
+              <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#8b5cf6"/>
+              </linearGradient></defs>
+            </svg>
+            <div class="total-inner"><div class="total-num" id="totalNum">0</div><div class="total-denom">/ 100</div></div>
+          </div>
+          <div class="total-label">TOTAL SCORE</div>
+          <div class="total-grade" id="totalGrade"></div>
+          <div class="module-pills" id="modulePills"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Main Grid -->
-  <div class="main-grid">
-
-    <!-- Monthly Score Bar Chart -->
-    <div class="panel" data-clickable id="panelMonthly">
-      <div class="panel-header">
-        <div class="panel-title">
-          <div class="panel-dot dot-amber"></div>月度平均成绩趋势
-        </div>
-        <div class="panel-hint">点击柱子查看月度详情</div>
-      </div>
-      <div class="panel-body">
-        <div class="chart-wrap">
-          <canvas id="chartMonthly"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Status Donut Chart -->
-    <div class="panel" data-clickable id="panelStatus">
-      <div class="panel-header">
-        <div class="panel-title">
-          <div class="panel-dot dot-cyan"></div>学生状态分布
-        </div>
-        <div class="panel-hint">点击区块查看名单</div>
-      </div>
-      <div class="panel-body">
-        <div class="chart-wrap">
-          <canvas id="chartStatus"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Attention List -->
-    <div class="panel span-row2" id="panelAttn">
-      <div class="panel-header">
-        <div class="panel-title">
-          <div class="panel-dot dot-rose"></div>需关注学生
-        </div>
-        <div class="panel-hint">点击查看详情</div>
-      </div>
-      <div class="attn-list" id="attnList"></div>
-    </div>
-
-    <!-- Subject Bar Chart -->
-    <div class="panel" id="panelSubject">
-      <div class="panel-header">
-        <div class="panel-title">
-          <div class="panel-dot dot-violet"></div>各科平均成绩
-        </div>
-        <div class="panel-hint">本月班级平均</div>
-      </div>
-      <div class="panel-body">
-        <div class="chart-wrap">
-          <canvas id="chartSubject"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Attendance Line Chart -->
-    <div class="panel" id="panelAttend">
-      <div class="panel-header">
-        <div class="panel-title">
-          <div class="panel-dot dot-green"></div>月度出勤率趋势
-        </div>
-        <div class="panel-hint">近6个月</div>
-      </div>
-      <div class="panel-body">
-        <div class="chart-wrap">
-          <canvas id="chartAttend"></canvas>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer -->
   <div class="footer">
-    <div class="footer-indicators">
-      <div class="indicator"><div class="ind-dot" style="background:var(--green)"></div>优秀 ≥90分</div>
-      <div class="indicator"><div class="ind-dot" style="background:var(--cyan)"></div>良好 80-89分</div>
-      <div class="indicator"><div class="ind-dot" style="background:var(--amber)"></div>一般 70-79分</div>
-      <div class="indicator"><div class="ind-dot" style="background:var(--rose)"></div>待提高 &lt;70分</div>
+    <div class="foot-mods">
+      <div class="fm"><div class="fm-dot" style="background:var(--cyan)"></div>课前 M1</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--blue)"></div>课堂 M2</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--violet)"></div>理论 M3</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--amber)"></div>设计 M4</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--green)"></div>实操 M5</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--teal)"></div>复盘 M6</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--violet)"></div>AI M7</div>
+      <div class="fm"><div class="fm-dot" style="background:var(--amber)"></div>项目 M8</div>
     </div>
-    <div>数据更新时间：<span id="lastUpdate">--</span></div>
+    <div>NEURAL·AI 评估系统 · 评估时间：<span id="lastUpdate">--</span></div>
   </div>
-
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal-card" id="modalCard">
-    <div class="modal-head">
-      <div>
-        <div class="modal-title" id="modalTitle">详情</div>
-        <div class="modal-sub" id="modalSub"></div>
-      </div>
-      <button class="modal-close" id="modalClose">✕</button>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
+<div class="ai-mascot-wrap" id="aiMascotWrap">
+  <div class="mascot-outer">
+    <div class="mring"><div class="mring-dot"></div></div>
+    <div class="mbody"><div class="rface">
+      <div class="reyes"><div class="reye l"></div><div class="reye r"></div></div>
+      <div class="rmouth"></div><div class="rai">A · I</div>
+    </div></div>
   </div>
+  <div class="mlabel">AI 洞察</div>
+</div>
+
+<div class="ai-panel" id="aiPanel">
+  <div class="aph">
+    <div class="apt"><div class="ath"></div>AI 智能洞察分析</div>
+    <button class="apc" id="aiClose">✕</button>
+  </div>
+  <div class="api-list" id="aiInsights"></div>
+  <div class="apf">🤖 由 AI 自动分析 · 基于8模块评估数据生成</div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// MOCK DATA
-// ═══════════════════════════════════════════════
-
-const MONTHS = ['11月','12月','1月','2月','3月','4月'];
-const SUBJECTS = ['语文','数学','英语','物理','化学'];
-
-function rnd(min, max) { return Math.round(min + Math.random() * (max - min)); }
-
-// generate deterministic-ish data
-const RAW_STUDENTS = [
-  { id:1,  name:'张伟涛', cls:'高一(1)班', base:88, trend: 1, attend_base:97, subj:[88,92,85,90,87] },
-  { id:2,  name:'李梦琪', cls:'高一(1)班', base:94, trend: 0, attend_base:100,subj:[92,96,95,93,90] },
-  { id:3,  name:'王浩然', cls:'高一(1)班', base:72, trend:-2, attend_base:88, subj:[70,68,75,65,72] },
-  { id:4,  name:'陈思雨', cls:'高一(1)班', base:85, trend: 1, attend_base:96, subj:[84,88,87,82,86] },
-  { id:5,  name:'刘子轩', cls:'高一(1)班', base:78, trend: 0, attend_base:93, subj:[78,75,80,74,76] },
-  { id:6,  name:'赵雅婷', cls:'高一(1)班', base:91, trend: 1, attend_base:99, subj:[90,94,92,89,91] },
-  { id:7,  name:'孙明宇', cls:'高一(1)班', base:65, trend:-3, attend_base:82, subj:[64,60,68,62,65] },
-  { id:8,  name:'周紫涵', cls:'高一(1)班', base:83, trend: 0, attend_base:95, subj:[83,87,82,80,85] },
-  { id:9,  name:'吴子杰', cls:'高一(1)班', base:76, trend: 2, attend_base:91, subj:[76,79,74,73,78] },
-  { id:10, name:'郑晓彤', cls:'高一(1)班', base:89, trend: 1, attend_base:98, subj:[89,91,88,87,90] },
-  { id:11, name:'冯嘉怡', cls:'高一(1)班', base:71, trend:-1, attend_base:89, subj:[70,65,73,68,71] },
-  { id:12, name:'蒋浩宇', cls:'高一(1)班', base:82, trend: 0, attend_base:94, subj:[81,86,80,79,83] },
-  { id:13, name:'韩静怡', cls:'高一(2)班', base:90, trend: 2, attend_base:99, subj:[91,93,90,88,92] },
-  { id:14, name:'杨博文', cls:'高一(2)班', base:67, trend:-4, attend_base:80, subj:[65,62,70,60,67] },
-  { id:15, name:'朱欣彤', cls:'高一(2)班', base:86, trend: 1, attend_base:96, subj:[85,89,87,84,86] },
-  { id:16, name:'许文博', cls:'高一(2)班', base:74, trend: 0, attend_base:92, subj:[73,78,72,70,75] },
-  { id:17, name:'何雨桐', cls:'高一(2)班', base:93, trend: 1, attend_base:100,subj:[92,95,94,91,93] },
-  { id:18, name:'吕泽宇', cls:'高一(2)班', base:69, trend:-2, attend_base:85, subj:[67,65,71,63,69] },
-  { id:19, name:'林晨曦', cls:'高一(2)班', base:88, trend: 0, attend_base:97, subj:[87,91,88,86,89] },
-  { id:20, name:'罗思琪', cls:'高一(2)班', base:80, trend: 1, attend_base:94, subj:[79,83,81,77,80] },
-  { id:21, name:'高俊贤', cls:'高一(2)班', base:77, trend:-1, attend_base:90, subj:[76,74,79,72,77] },
-  { id:22, name:'谢雨欣', cls:'高一(2)班', base:95, trend: 1, attend_base:100,subj:[94,97,95,93,95] },
-  { id:23, name:'唐子豪', cls:'高一(2)班', base:62, trend:-3, attend_base:78, subj:[60,58,65,55,62] },
-  { id:24, name:'曹思远', cls:'高一(2)班', base:84, trend: 0, attend_base:95, subj:[83,87,85,82,84] },
+// ═══ STUDENT DATA ═══
+const STUDENTS = [
+  {
+    name:'陈美琳', avatar:'陈',
+    m1:{score:9.0,subs:[{n:'预习完成率',v:4.5,max:5},{n:'任务准时率',v:2.8,max:3},{n:'话术初稿完整',v:1.7,max:2}]},
+    m2:{score:8.8,data:[3.8,2.5,2.5,8.8]},
+    m3:{score:14.0,data:[94,94,93.3,90]},
+    m4:{score:12.5,data:[6.5,6.0],subs:[{n:'取信话术',v:6.5,max:8},{n:'促单话术',v:6.0,max:7}]},
+    m5:{score:12.5,subs:[{n:'镜头感',v:3.5,max:4},{n:'场控稳定性',v:3.3,max:4},{n:'突发应对',v:3.0,max:4},{n:'流程完整性',v:2.7,max:3}]},
+    m6:{score:7.0,trend:[5.0,6.0,6.5,7.0],subs:[{n:'数据反馈使用',v:3.5,max:5},{n:'反思改进落实',v:3.5,max:5}]},
+    m7:{score:9.0,data:[3.0,1.8,2.0,2.2]},
+    m8:{score:9.5,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.7,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.8,max:4}]},
+    total:82.3,
+    insights:[
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识模块得分最高 <strong style="color:var(--violet)">93.3%</strong>，取信/促单理论掌握扎实。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'AI创新应用模块仅 <strong style="color:var(--rose)">60%</strong>，建议加强 DeepSeek 话术优化实践。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力持续进步，4次复盘从 5.0→7.0，提升 <strong style="color:var(--teal)">40%</strong>。'},
+      {ico:'🎬',tag:'tg-g',label:'亮点',text:'直播项目成果 9.5/10，实战转化能力 <strong style="color:var(--amber)">优秀</strong>。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'若提升 M6/M7 模块，预计综合评分可突破 <strong style="color:var(--cyan)">88分</strong>。'},
+    ]
+  },
+  {
+    name:'李子豪', avatar:'李',
+    m1:{score:7.5,subs:[{n:'预习完成率',v:3.8,max:5},{n:'任务准时率',v:2.2,max:3},{n:'话术初稿完整',v:1.5,max:2}]},
+    m2:{score:9.2,data:[3.9,2.8,2.5,9.2]},
+    m3:{score:11.8,data:[80,82,79,77]},
+    m4:{score:13.5,data:[7.2,6.3],subs:[{n:'取信话术',v:7.2,max:8},{n:'促单话术',v:6.3,max:7}]},
+    m5:{score:13.2,subs:[{n:'镜头感',v:3.8,max:4},{n:'场控稳定性',v:3.5,max:4},{n:'突发应对',v:3.2,max:4},{n:'流程完整性',v:2.7,max:3}]},
+    m6:{score:8.5,trend:[4.5,6.0,7.5,8.5],subs:[{n:'数据反馈使用',v:4.2,max:5},{n:'反思改进落实',v:4.3,max:5}]},
+    m7:{score:11.2,data:[4.0,2.5,2.5,2.2]},
+    m8:{score:8.8,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.2,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.6,max:4}]},
+    total:83.7,
+    insights:[
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'直播设计能力突出，M4得分 <strong style="color:var(--amber)">90%</strong>，话术设计能力强。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力提升显著，从 4.5→8.5，进步 <strong style="color:var(--teal)">89%</strong>，成长最快。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'理论知识模块偏弱仅 <strong style="color:var(--rose)">78.7%</strong>，建议系统复习促单心理效应。'},
+      {ico:'🎬',tag:'tg-g',label:'亮点',text:'实操表现 13.2/15，镜头感与场控均表现出色。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'加强 M3 理论基础，综合评分有望达到 <strong style="color:var(--cyan)">90分</strong>。'},
+    ]
+  },
+  {
+    name:'王雅婷', avatar:'王',
+    m1:{score:9.8,subs:[{n:'预习完成率',v:5.0,max:5},{n:'任务准时率',v:3.0,max:3},{n:'话术初稿完整',v:1.8,max:2}]},
+    m2:{score:7.5,data:[3.2,2.0,2.3,7.5]},
+    m3:{score:14.5,data:[97,96,95,93]},
+    m4:{score:10.8,data:[5.8,5.0],subs:[{n:'取信话术',v:5.8,max:8},{n:'促单话术',v:5.0,max:7}]},
+    m5:{score:10.5,subs:[{n:'镜头感',v:2.8,max:4},{n:'场控稳定性',v:2.8,max:4},{n:'突发应对',v:2.5,max:4},{n:'流程完整性',v:2.4,max:3}]},
+    m6:{score:9.0,trend:[6.0,7.0,8.0,9.0],subs:[{n:'数据反馈使用',v:4.5,max:5},{n:'反思改进落实',v:4.5,max:5}]},
+    m7:{score:10.5,data:[3.5,2.8,2.2,2.0]},
+    m8:{score:8.2,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:4.8,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.4,max:4}]},
+    total:80.8,
+    insights:[
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识顶尖，M3得分 <strong style="color:var(--violet)">96.7%</strong>，班级理论第一。'},
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'课前准备近满分，预习与任务准时率双双达标。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'直播实操表现仅 <strong style="color:var(--rose)">70%</strong>，镜头感与场控需重点训练。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力稳步提升 6.0→9.0，方法论掌握扎实。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'突破 M5 实操瓶颈，评分可达 <strong style="color:var(--cyan)">88分</strong>。'},
+    ]
+  },
+  {
+    name:'张鹏飞', avatar:'张',
+    m1:{score:6.2,subs:[{n:'预习完成率',v:3.0,max:5},{n:'任务准时率',v:2.0,max:3},{n:'话术初稿完整',v:1.2,max:2}]},
+    m2:{score:8.0,data:[3.5,2.2,2.3,8.0]},
+    m3:{score:10.5,data:[72,70,73,68]},
+    m4:{score:11.0,data:[6.0,5.0],subs:[{n:'取信话术',v:6.0,max:8},{n:'促单话术',v:5.0,max:7}]},
+    m5:{score:14.0,subs:[{n:'镜头感',v:4.0,max:4},{n:'场控稳定性',v:3.8,max:4},{n:'突发应对',v:3.5,max:4},{n:'流程完整性',v:2.7,max:3}]},
+    m6:{score:5.5,trend:[3.5,4.0,4.5,5.5],subs:[{n:'数据反馈使用',v:2.8,max:5},{n:'反思改进落实',v:2.7,max:5}]},
+    m7:{score:7.5,data:[2.5,1.5,1.8,1.7]},
+    m8:{score:9.2,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.5,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.7,max:4}]},
+    total:71.9,
+    insights:[
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'直播实操超强，M5达 <strong style="color:var(--green)">93.3%</strong>，镜头感满分，天赋突出。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'课前习惯薄弱，M1仅 <strong style="color:var(--rose)">62%</strong>，需加强预习自律。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'理论知识 M3 仅 <strong style="color:var(--rose)">70%</strong>，建议补充系统理论学习。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力有提升但仍偏低，需强化数据分析思维。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'补足 M1/M3/M6，实操优势将带动评分至 <strong style="color:var(--cyan)">85分+</strong>。'},
+    ]
+  },
+  {
+    name:'刘晓雯', avatar:'刘',
+    m1:{score:8.5,subs:[{n:'预习完成率',v:4.2,max:5},{n:'任务准时率',v:2.8,max:3},{n:'话术初稿完整',v:1.5,max:2}]},
+    m2:{score:9.5,data:[4.0,2.8,2.7,9.5]},
+    m3:{score:13.2,data:[90,88,87,85]},
+    m4:{score:14.0,data:[7.5,6.5],subs:[{n:'取信话术',v:7.5,max:8},{n:'促单话术',v:6.5,max:7}]},
+    m5:{score:13.8,subs:[{n:'镜头感',v:3.8,max:4},{n:'场控稳定性',v:3.8,max:4},{n:'突发应对',v:3.5,max:4},{n:'流程完整性',v:2.7,max:3}]},
+    m6:{score:8.0,trend:[5.5,6.5,7.2,8.0],subs:[{n:'数据反馈使用',v:4.0,max:5},{n:'反思改进落实',v:4.0,max:5}]},
+    m7:{score:13.0,data:[4.5,2.8,2.8,2.9]},
+    m8:{score:9.8,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.9,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.9,max:4}]},
+    total:89.8,
+    insights:[
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'综合能力最强，总分 <strong style="color:var(--cyan)">89.8分</strong>，名列班级第一。'},
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'M4 直播设计能力 93.3%，话术设计专业度极高。'},
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'M7 AI创新应用 86.7%，DeepSeek 应用最为熟练。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力从 5.5→8.0 持续提升，学习闭环完整。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'课前准备可进一步提升，冲击 <strong style="color:var(--cyan)">92分</strong> 目标可期。'},
+    ]
+  },
+  {
+    name:'赵明宇', avatar:'赵',
+    m1:{score:7.0,subs:[{n:'预习完成率',v:3.5,max:5},{n:'任务准时率',v:2.2,max:3},{n:'话术初稿完整',v:1.3,max:2}]},
+    m2:{score:6.8,data:[3.0,1.8,2.0,6.8]},
+    m3:{score:12.0,data:[82,80,80,78]},
+    m4:{score:9.5,data:[5.2,4.3],subs:[{n:'取信话术',v:5.2,max:8},{n:'促单话术',v:4.3,max:7}]},
+    m5:{score:11.0,subs:[{n:'镜头感',v:3.0,max:4},{n:'场控稳定性',v:2.8,max:4},{n:'突发应对',v:2.8,max:4},{n:'流程完整性',v:2.4,max:3}]},
+    m6:{score:6.0,trend:[3.0,4.0,5.0,6.0],subs:[{n:'数据反馈使用',v:3.0,max:5},{n:'反思改进落实',v:3.0,max:5}]},
+    m7:{score:8.5,data:[3.0,2.0,2.0,1.5]},
+    m8:{score:7.5,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:4.5,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.0,max:4}]},
+    total:68.3,
+    insights:[
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'整体评分偏低 <strong style="color:var(--rose)">68.3分</strong>，建议制定专项提升计划。'},
+      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识 M3 相对较好，基础知识框架基本建立。'},
+      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'M4 直播设计能力 63.3%，话术设计需大量练习。'},
+      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力从 3.0→6.0 翻倍增长，学习潜力可期。'},
+      {ico:'🔮',tag:'tg-p',label:'建议',text:'全面补强 M2/M4/M5，重点加强课堂互动参与度。'},
+    ]
+  },
 ];
 
-// Build monthly scores for each student (6 months)
-const STUDENTS = RAW_STUDENTS.map(s => {
-  const scores = MONTHS.map((_, i) => {
-    const base = s.base + s.trend * i;
-    return Math.min(100, Math.max(50, base + (Math.sin(i * 1.3 + s.id) * 4 | 0)));
-  });
-  const attendances = MONTHS.map((_, i) => {
-    const base = s.attend_base - i * 0.3;
-    return Math.min(100, Math.max(60, base + (Math.sin(i * 2 + s.id) * 2 | 0)));
-  });
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-  let status;
-  if (avg >= 90) status = '优秀';
-  else if (avg >= 80) status = '良好';
-  else if (avg >= 70) status = '一般';
-  else status = '待提高';
-
-  const scoreDrop = scores[scores.length-1] - scores[scores.length-2];
-  const lastAttend = attendances[attendances.length-1];
-
-  const alerts = [];
-  if (scoreDrop <= -8) alerts.push({ type:'drop',  label:'成绩骤降' });
-  if (lastAttend < 85) alerts.push({ type:'absen', label:'出勤偏低' });
-  if (scores[scores.length-1] < 68) alerts.push({ type:'low',   label:'成绩偏低' });
-
-  return { ...s, scores, attendances, avg: +avg.toFixed(1), status, scoreDrop, lastAttend, alerts };
-});
-
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-
-let currentClass = '全部';
-let charts = {};
-
-function getFiltered() {
-  if (currentClass === '全部') return STUDENTS;
-  return STUDENTS.filter(s => s.cls === currentClass);
+// ═══ HELPERS ═══
+function getGrade(s){
+  if(s>=90)return{text:'优秀 · A',color:'#34d399'};
+  if(s>=80)return{text:'良好 · B+',color:'#fbbf24'};
+  if(s>=70)return{text:'及格 · C',color:'#f59e0b'};
+  return{text:'待提升 · D',color:'#f43f5e'};
 }
-
-// ═══════════════════════════════════════════════
-// CHART DEFAULTS
-// ═══════════════════════════════════════════════
-
-Chart.defaults.color = 'rgba(220,233,255,0.48)';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
-Chart.defaults.font.family = "'PingFang SC','Microsoft YaHei',system-ui,sans-serif";
-
-function hexToRgba(hex, a) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${a})`;
+function subBar(subs,color){
+  return subs.map(b=>`<div class="sub-row">
+    <div class="sub-name">${b.n}</div>
+    <div class="sub-bg"><div class="sub-fill" style="width:0%;background:${color}" data-pct="${(b.v/b.max*100).toFixed(1)}"></div></div>
+    <div class="sub-val" style="color:${color}">${b.v}/${b.max}</div>
+  </div>`).join('');
 }
-
-// ═══════════════════════════════════════════════
-// BUILD CHARTS
-// ═══════════════════════════════════════════════
-
-function buildMonthlyChart() {
-  const students = getFiltered();
-  const monthlyAvg = MONTHS.map((_, mi) => {
-    const scores = students.map(s => s.scores[mi]);
-    return +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
-  });
-
-  const ctx = document.getElementById('chartMonthly');
-  if (charts.monthly) charts.monthly.destroy();
-
-  charts.monthly = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: MONTHS,
-      datasets: [{
-        label: '月均分',
-        data: monthlyAvg,
-        backgroundColor: MONTHS.map((_, i) =>
-          i === MONTHS.length-1
-            ? 'rgba(245,158,11,0.85)'
-            : 'rgba(245,158,11,0.35)'
-        ),
-        borderColor: MONTHS.map((_, i) =>
-          i === MONTHS.length-1 ? '#f59e0b' : 'rgba(245,158,11,0.5)'
-        ),
-        borderWidth: 2,
-        borderRadius: 6,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      onClick: (evt, elements) => {
-        if (!elements.length) return;
-        const mi = elements[0].index;
-        showMonthModal(mi);
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` 平均分：${ctx.parsed.y} 分`
-          }
-        }
-      },
-      scales: {
-        y: {
-          min: 50, max: 100,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { stepSize: 10 }
-        },
-        x: { grid: { display: false } }
-      }
-    }
+function animBars(){
+  // Trigger bar fill animation after paint
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.sub-fill[data-pct]').forEach(el=>{
+      el.style.width=el.dataset.pct+'%';
+    });
   });
 }
 
-function buildStatusChart() {
-  const students = getFiltered();
-  const counts = { '优秀':0, '良好':0, '一般':0, '待提高':0 };
-  students.forEach(s => counts[s.status]++);
+// ═══ CHART INSTANCES ═══
+Chart.defaults.color='rgba(180,220,255,0.45)';
+Chart.defaults.borderColor='rgba(255,255,255,0.05)';
+Chart.defaults.font.family="'PingFang SC','Microsoft YaHei',system-ui,sans-serif";
+Chart.defaults.font.size=11;
+let CH={};
 
-  const ctx = document.getElementById('chartStatus');
-  if (charts.status) charts.status.destroy();
+function initCharts(s){
+  Object.values(CH).forEach(c=>c&&c.destroy());CH={};
 
-  charts.status = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(counts),
-      datasets: [{
-        data: Object.values(counts),
-        backgroundColor: [
-          'rgba(74,222,128,0.75)',
-          'rgba(34,211,238,0.75)',
-          'rgba(245,158,11,0.75)',
-          'rgba(251,113,133,0.75)',
-        ],
-        borderColor: ['#4ade80','#22d3ee','#f59e0b','#fb7185'],
-        borderWidth: 2,
-        hoverOffset: 10,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '62%',
-      onClick: (evt, elements) => {
-        if (!elements.length) return;
-        const label = Object.keys(counts)[elements[0].index];
-        showStatusModal(label);
-      },
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: {
-            boxWidth: 10,
-            padding: 14,
-            font: { size: 12 }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}：${ctx.parsed} 人`
-          }
-        }
-      }
-    }
-  });
+  CH.m1=new Chart(document.getElementById('chartM1'),{type:'doughnut',
+    data:{datasets:[{data:[s.m1.score,10-s.m1.score],
+      backgroundColor:['rgba(0,229,255,0.75)','rgba(255,255,255,0.05)'],
+      borderColor:['#00e5ff','rgba(255,255,255,0.04)'],borderWidth:2,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed} 分`}}}}});
+
+  CH.m2=new Chart(document.getElementById('chartM2'),{type:'bar',
+    data:{labels:['出勤率','小组研讨','直播演练','模块总分'],
+      datasets:[{label:'得分',data:s.m2.data,
+        backgroundColor:['rgba(59,130,246,.7)','rgba(59,130,246,.6)','rgba(59,130,246,.6)','rgba(59,130,246,.85)'],
+        borderColor:'#3b82f6',borderWidth:1.5,borderRadius:5,borderSkipped:false},
+      {label:'满分',data:[4,3,3,10],backgroundColor:'rgba(255,255,255,0.04)',
+        borderColor:'rgba(255,255,255,0.1)',borderWidth:1,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y}`}}},
+      scales:{y:{max:11,grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false}}}}});
+
+  CH.m3=new Chart(document.getElementById('chartM3'),{type:'radar',
+    data:{labels:['取信3方法','促单3效应','Yes/And/But','话术合规'],
+      datasets:[{label:'得分率',data:s.m3.data,
+        backgroundColor:'rgba(139,92,246,0.15)',borderColor:'rgba(139,92,246,0.8)',
+        pointBackgroundColor:'#8b5cf6',pointBorderColor:'#071525',
+        pointBorderWidth:2,pointRadius:5,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.r.toFixed(1)}%`}}},
+      scales:{r:{min:60,max:100,grid:{color:'rgba(255,255,255,.07)'},
+        angleLines:{color:'rgba(255,255,255,.07)'},
+        pointLabels:{font:{size:10},color:'rgba(180,220,255,0.6)'},ticks:{display:false}}}}});
+
+  CH.m4=new Chart(document.getElementById('chartM4'),{type:'bar',
+    data:{labels:['取信话术\n(专业化/举证/场景化)','促单话术\n(心理效应/互动)'],
+      datasets:[{label:'得分',data:s.m4.data,backgroundColor:'rgba(245,158,11,.72)',
+        borderColor:'#f59e0b',borderWidth:2,borderRadius:6,borderSkipped:false},
+      {label:'满分',data:[8,7],backgroundColor:'rgba(255,255,255,0.04)',
+        borderColor:'rgba(255,255,255,0.1)',borderWidth:1,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{max:9,grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false}}}}});
+
+  CH.m6=new Chart(document.getElementById('chartM6'),{type:'line',
+    data:{labels:['第1次','第2次','第3次','第4次'],
+      datasets:[{label:'复盘得分',data:s.m6.trend,borderColor:'#14b8a6',
+        backgroundColor:'rgba(20,184,166,.08)',borderWidth:2.5,pointRadius:6,
+        pointBackgroundColor:'#14b8a6',pointBorderColor:'#071525',pointBorderWidth:2,tension:.35,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} 分`}}},
+      scales:{y:{min:0,max:10,grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false}}}}});
+
+  CH.m7=new Chart(document.getElementById('chartM7'),{type:'bar',
+    data:{labels:['DeepSeek\n优化话术','数据大屏\n分析','数字人PK\n参与','文化/双语\n创新'],
+      datasets:[{label:'得分',data:s.m7.data,
+        backgroundColor:['rgba(139,92,246,.75)','rgba(139,92,246,.6)','rgba(139,92,246,.65)','rgba(139,92,246,.7)'],
+        borderColor:'#8b5cf6',borderWidth:1.5,borderRadius:5,borderSkipped:false},
+      {label:'满分',data:[5,3,3,4],backgroundColor:'rgba(255,255,255,0.04)',
+        borderColor:'rgba(255,255,255,0.1)',borderWidth:1,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{max:6,grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false}}}}});
 }
 
-function buildSubjectChart() {
-  const students = getFiltered();
-  const subjectAvg = SUBJECTS.map((_, si) => {
-    const scores = students.map(s => s.subj[si]);
-    return +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
-  });
-
-  const colors = ['rgba(167,139,250,0.75)','rgba(167,139,250,0.6)','rgba(167,139,250,0.5)','rgba(167,139,250,0.4)','rgba(167,139,250,0.3)'];
-
-  const ctx = document.getElementById('chartSubject');
-  if (charts.subject) charts.subject.destroy();
-
-  charts.subject = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: SUBJECTS,
-      datasets: [{
-        label: '班级平均分',
-        data: subjectAvg,
-        backgroundColor: 'rgba(167,139,250,0.6)',
-        borderColor: '#a78bfa',
-        borderWidth: 2,
-        borderRadius: 6,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` 均分：${ctx.parsed.x} 分`
-          }
-        }
-      },
-      scales: {
-        x: {
-          min: 50, max: 100,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { stepSize: 10 }
-        },
-        y: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-function buildAttendChart() {
-  const students = getFiltered();
-  const monthlyAttend = MONTHS.map((_, mi) => {
-    const atts = students.map(s => s.attendances[mi]);
-    return +(atts.reduce((a,b)=>a+b,0)/atts.length).toFixed(1);
-  });
-
-  const ctx = document.getElementById('chartAttend');
-  if (charts.attend) charts.attend.destroy();
-
-  charts.attend = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: MONTHS,
-      datasets: [{
-        label: '出勤率',
-        data: monthlyAttend,
-        borderColor: '#4ade80',
-        backgroundColor: 'rgba(74,222,128,0.08)',
-        borderWidth: 2.5,
-        pointRadius: 5,
-        pointBackgroundColor: '#4ade80',
-        pointBorderColor: '#0b1928',
-        pointBorderWidth: 2,
-        tension: 0.35,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` 出勤率：${ctx.parsed.y}%`
-          }
-        }
-      },
-      scales: {
-        y: {
-          min: 80, max: 100,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { callback: v => v + '%' }
-        },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════
-// ATTENTION LIST
-// ═══════════════════════════════════════════════
-
-function buildAttnList() {
-  const students = getFiltered();
-  const alerts = students
-    .filter(s => s.alerts.length > 0)
-    .sort((a, b) => b.alerts.length - a.alerts.length);
-
-  const el = document.getElementById('attnList');
-  el.innerHTML = '';
-
-  if (alerts.length === 0) {
-    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--dim)">✅ 暂无需关注学生</div>`;
-    return;
+function drawGauge(score){
+  const cv=document.getElementById('chartM5');
+  const W=cv.offsetWidth,H=cv.offsetHeight;
+  cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;
+  const ctx=cv.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+  const cx=W/2,cy=H*.62,R=Math.min(W,H)*.38;
+  const pct=score/15,sa=Math.PI*.75,ea=Math.PI*2.25,range=ea-sa,fe=sa+range*pct;
+  for(let i=0;i<=10;i++){
+    const a=sa+range*i/10,m=i%5===0;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(R+(m?5:2)),cy+Math.sin(a)*(R+(m?5:2)));
+    ctx.lineTo(cx+Math.cos(a)*(R+(m?12:6)),cy+Math.sin(a)*(R+(m?12:6)));
+    ctx.strokeStyle=m?'rgba(255,255,255,.28)':'rgba(255,255,255,.1)';ctx.lineWidth=m?1.5:.8;ctx.stroke();
   }
-
-  alerts.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'attn-item';
-    div.innerHTML = `
-      <div class="attn-avatar">${s.name[0]}</div>
-      <div class="attn-info">
-        <div class="attn-name">${s.name}</div>
-        <div class="attn-desc">${s.cls} · 本月 ${s.scores[5]} 分</div>
-      </div>
-      ${s.alerts.map(a => `<div class="attn-tag tag-${a.type}">${a.label}</div>`).join('')}
-    `;
-    div.addEventListener('click', () => showStudentModal(s));
-    el.appendChild(div);
-  });
+  ctx.beginPath();ctx.arc(cx,cy,R,sa,ea);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=11;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R,sa,fe);ctx.strokeStyle='rgba(16,185,129,.25)';ctx.lineWidth=18;ctx.lineCap='round';ctx.stroke();
+  const g=ctx.createLinearGradient(cx-R,cy,cx+R,cy);g.addColorStop(0,'#10b981');g.addColorStop(1,'#34d399');
+  ctx.beginPath();ctx.arc(cx,cy,R,sa,fe);ctx.strokeStyle=g;ctx.lineWidth=11;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(fe)*(R-8),cy+Math.sin(fe)*(R-8));
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#f59e0b';ctx.fill();
+  ctx.fillStyle='#cde8ff';ctx.font=`bold ${Math.round(H*.14)}px Orbitron,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(score.toFixed(1),cx,cy+R*.12);
+  ctx.font=`${Math.round(H*.065)}px PingFang SC,sans-serif`;
+  ctx.fillStyle='rgba(180,220,255,0.42)';ctx.fillText('/ 15',cx,cy+R*.3);
 }
 
-// ═══════════════════════════════════════════════
-// KPI CARDS
-// ═══════════════════════════════════════════════
-
-function animateCount(el, to, suffix='', decimals=0) {
-  const start = 0;
-  const dur = 1200;
-  const startTime = performance.now();
-  function step(now) {
-    const p = Math.min((now - startTime) / dur, 1);
-    const ease = 1 - Math.pow(1 - p, 3);
-    const val = start + (to - start) * ease;
-    el.textContent = (decimals ? val.toFixed(decimals) : Math.round(val)) + suffix;
-    if (p < 1) requestAnimationFrame(step);
+let _rafTotal=null;
+function animTotal(target){
+  const ring=document.getElementById('totalRing');
+  const numEl=document.getElementById('totalNum');
+  const C=2*Math.PI*45;
+  ring.style.strokeDasharray=C;ring.style.strokeDashoffset=C;
+  if(_rafTotal)cancelAnimationFrame(_rafTotal);
+  setTimeout(()=>{ring.style.strokeDashoffset=C*(1-target/100);},100);
+  const dur=1200,t0=performance.now();
+  function step(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
+    numEl.textContent=(e*target).toFixed(1);
+    if(p<1)_rafTotal=requestAnimationFrame(step);
   }
-  requestAnimationFrame(step);
+  _rafTotal=requestAnimationFrame(step);
 }
 
-function updateKPIs() {
-  const students = getFiltered();
-  const lastIdx = MONTHS.length - 1;
-  const prevIdx = MONTHS.length - 2;
+// ═══ RENDER ═══
+let _gaugeScore=12.5;
+function renderStudent(idx){
+  const s=STUDENTS[idx];
+  document.querySelectorAll('.stu-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
 
-  const currentAvgs = students.map(s => s.scores[lastIdx]);
-  const prevAvgs    = students.map(s => s.scores[prevIdx]);
-  const avgNow  = +(currentAvgs.reduce((a,b)=>a+b,0)/currentAvgs.length).toFixed(1);
-  const avgPrev = +(prevAvgs.reduce((a,b)=>a+b,0)/prevAvgs.length).toFixed(1);
-  const diff = +(avgNow - avgPrev).toFixed(1);
+  document.getElementById('chip1').textContent=`${s.m1.score} / 10`;
+  document.getElementById('chip2').textContent=`${s.m2.score} / 10`;
+  document.getElementById('chip3').textContent=`${s.m3.score} / 15`;
+  document.getElementById('chip4').textContent=`${s.m4.score} / 15`;
+  document.getElementById('chip5').textContent=`${s.m5.score} / 15`;
+  document.getElementById('chip6').textContent=`${s.m6.score} / 10`;
+  document.getElementById('chip7').textContent=`${s.m7.score} / 15`;
+  document.getElementById('chip8').textContent=`${s.m8.score} / 10`;
+  document.getElementById('chipTotal').textContent=`${s.total} / 100`;
 
-  const attendances = students.map(s => s.attendances[lastIdx]);
-  const avgAttend = +(attendances.reduce((a,b)=>a+b,0)/attendances.length).toFixed(1);
+  document.getElementById('dc1').textContent=s.m1.score.toFixed(1);
+  document.getElementById('subM1').innerHTML=subBar(s.m1.subs,'var(--cyan)');
+  document.getElementById('subM4').innerHTML=subBar(s.m4.subs,'var(--amber)');
+  document.getElementById('subM5').innerHTML=subBar(s.m5.subs,'var(--green)');
+  document.getElementById('subM6').innerHTML=subBar(s.m6.subs,'var(--teal)');
 
-  const alertCount = students.filter(s => s.alerts.length > 0).length;
+  document.getElementById('bigScore').textContent=s.m8.score.toFixed(1);
+  document.getElementById('bigLabel').textContent=s.m8.score>=9?'满分 10 分 · 优秀':s.m8.score>=7?'满分 10 分 · 良好':'满分 10 分 · 待提升';
+  document.getElementById('bigSub').innerHTML=s.m8.subs.map((b,i)=>`
+    <div class="big-sub-row"><div class="big-sub-name">✦ ${b.n}</div><div class="big-sub-score">${b.v}/${b.max}</div></div>
+    <div class="sub-bg"${i===0?' style="margin-bottom:6px"':''}><div class="sub-fill" style="width:0%;background:var(--amber)" data-pct="${(b.v/b.max*100).toFixed(1)}"></div></div>`).join('');
 
-  animateCount(document.getElementById('kpiTotal'), students.length);
-  animateCount(document.getElementById('kpiAvg'), avgNow, '', 1);
-  animateCount(document.getElementById('kpiAttend'), avgAttend, '%', 1);
-  animateCount(document.getElementById('kpiAlert'), alertCount);
+  const gr=getGrade(s.total);
+  document.getElementById('totalGrade').textContent=gr.text;
+  document.getElementById('totalGrade').style.color=gr.color;
 
-  const badge = document.getElementById('kpiAvgBadge');
-  if (diff > 0) {
-    badge.textContent = `↑ ${diff} 分 vs 上月`;
-    badge.className = 'kpi-badge up';
-  } else if (diff < 0) {
-    badge.textContent = `↓ ${Math.abs(diff)} 分 vs 上月`;
-    badge.className = 'kpi-badge down';
-  } else {
-    badge.textContent = `= 与上月持平`;
-    badge.className = 'kpi-badge';
-  }
-}
+  document.getElementById('modulePills').innerHTML=`
+    <div class="mpill" style="border-color:rgba(0,229,255,.3);color:var(--cyan)">M1 ${s.m1.score}</div>
+    <div class="mpill" style="border-color:rgba(59,130,246,.3);color:var(--blue)">M2 ${s.m2.score}</div>
+    <div class="mpill" style="border-color:rgba(139,92,246,.3);color:var(--violet)">M3 ${s.m3.score}</div>
+    <div class="mpill" style="border-color:rgba(245,158,11,.3);color:var(--amber)">M4 ${s.m4.score}</div>
+    <div class="mpill" style="border-color:rgba(16,185,129,.3);color:var(--green)">M5 ${s.m5.score}</div>
+    <div class="mpill" style="border-color:rgba(20,184,166,.3);color:var(--teal)">M6 ${s.m6.score}</div>
+    <div class="mpill" style="border-color:rgba(139,92,246,.3);color:var(--violet)">M7 ${s.m7.score}</div>
+    <div class="mpill" style="border-color:rgba(251,191,36,.4);color:#fbbf24">M8 ${s.m8.score}</div>`;
 
-// ═══════════════════════════════════════════════
-// MODALS
-// ═══════════════════════════════════════════════
-
-function openModal(title, sub, bodyHtml) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalSub').textContent = sub;
-  document.getElementById('modalBody').innerHTML = bodyHtml;
-  document.getElementById('modalOverlay').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-}
-
-function showMonthModal(monthIndex) {
-  const students = getFiltered();
-  const month = MONTHS[monthIndex];
-  const withScores = students
-    .map(s => ({ ...s, thisScore: s.scores[monthIndex] }))
-    .sort((a, b) => b.thisScore - a.thisScore);
-
-  const avg = (withScores.reduce((a,b)=>a+b.thisScore,0)/withScores.length).toFixed(1);
-  const top3 = withScores.slice(0, 3);
-  const bottom3 = withScores.slice(-3).reverse();
-
-  const scoreRanges = [
-    { label:'≥90分', min:90, max:101, color:'var(--green)' },
-    { label:'80-89',  min:80, max:90,  color:'var(--cyan)' },
-    { label:'70-79',  min:70, max:80,  color:'var(--amber)' },
-    { label:'<70分',  min:0,  max:70,  color:'var(--rose)' },
-  ];
-
-  const distributionHtml = scoreRanges.map(r => {
-    const cnt = withScores.filter(s => s.thisScore >= r.min && s.thisScore < r.max).length;
-    const pct = Math.round(cnt / withScores.length * 100);
-    return `
-      <div class="subject-row">
-        <div class="subject-name" style="font-size:.7rem">${r.label}</div>
-        <div class="subject-bar-bg">
-          <div class="subject-bar-fill" style="width:${pct}%;background:${r.color}"></div>
-        </div>
-        <div class="subject-score" style="color:${r.color}">${cnt}人</div>
-      </div>`;
-  }).join('');
-
-  const topHtml = top3.map((s,i) => `
-    <tr>
-      <td><span class="rank-badge" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green)">TOP${i+1}</span></td>
-      <td style="font-weight:700">${s.name}</td>
-      <td style="color:var(--dim)">${s.cls}</td>
-      <td><span style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--green)">${s.thisScore}</span></td>
-    </tr>`).join('');
-
-  const bottomHtml = bottom3.map((s,i) => `
-    <tr>
-      <td><span class="rank-badge" style="background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);color:var(--rose)">低${i+1}</span></td>
-      <td style="font-weight:700">${s.name}</td>
-      <td style="color:var(--dim)">${s.cls}</td>
-      <td><span style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--rose)">${s.thisScore}</span></td>
-    </tr>`).join('');
-
-  openModal(`${month} 成绩详情`, `班级均分 ${avg} 分 · 共 ${withScores.length} 人`, `
-    <div class="modal-section-title">成绩分布</div>
-    <div class="subject-mini">${distributionHtml}</div>
-
-    <div class="modal-section-title">成绩排名（前3 / 后3）</div>
-    <table class="month-table">
-      <thead><tr><th>排名</th><th>姓名</th><th>班级</th><th>分数</th></tr></thead>
-      <tbody>${topHtml}<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:4px">· · ·</td></tr>${bottomHtml}</tbody>
-    </table>
-  `);
-}
-
-function showStatusModal(status) {
-  const students = getFiltered().filter(s => s.status === status);
-  const colorMap = { '优秀':'var(--green)', '良好':'var(--cyan)', '一般':'var(--amber)', '待提高':'var(--rose)' };
-  const color = colorMap[status] || 'var(--text)';
-
-  const cardsHtml = students.map(s => `
-    <div class="student-card" onclick="showStudentModal(STUDENTS.find(x=>x.id===${s.id}))">
-      <div class="sc-name">${s.name}</div>
-      <div class="sc-cls">${s.cls}</div>
-      <div class="sc-score" style="color:${color}">${s.scores[5]}</div>
+  document.getElementById('aiInsights').innerHTML=s.insights.map((ins,i)=>`
+    <div class="api" style="animation-delay:${i*.06}s">
+      <div class="api-ico">${ins.ico}</div>
+      <div><div class="apt-tag ${ins.tag}">${ins.label}</div><div>${ins.text}</div></div>
     </div>`).join('');
 
-  openModal(`${status} 学生名单`, `共 ${students.length} 人 · 点击查看个人详情`, `
-    <div class="student-grid">${cardsHtml}</div>
-  `);
+  initCharts(s);
+  animBars();
+  _gaugeScore=s.m5.score;
+  setTimeout(()=>drawGauge(s.m5.score),50);
+  window.onresize=()=>drawGauge(_gaugeScore);
+  animTotal(s.total);
 }
 
-function showStudentModal(s) {
-  const maxScore = 100;
-  const colors = ['#f59e0b','#a78bfa','#22d3ee','#4ade80','#fb7185'];
-  const subjHtml = SUBJECTS.map((sub, i) => {
-    const score = s.subj[i];
-    const pct = (score - 50) / 50 * 100;
-    return `
-      <div class="subject-row">
-        <div class="subject-name">${sub}</div>
-        <div class="subject-bar-bg">
-          <div class="subject-bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
-        </div>
-        <div class="subject-score" style="color:${colors[i]}">${score}</div>
-      </div>`;
-  }).join('');
-
-  const trendBarsHtml = s.scores.map((sc, i) => {
-    const pct = (sc - 50) / 50 * 100;
-    const isLast = i === s.scores.length - 1;
-    const color = isLast ? '#f59e0b' : 'rgba(245,158,11,0.4)';
-    return `
-      <div class="trend-bar-wrap">
-        <div class="trend-val" style="color:${color}">${sc}</div>
-        <div class="trend-bar" style="height:${pct}%;background:${color};width:100%"></div>
-        <div class="trend-label">${MONTHS[i]}</div>
-      </div>`;
-  }).join('');
-
-  const statusColorMap = { '优秀':'var(--green)', '良好':'var(--cyan)', '一般':'var(--amber)', '待提高':'var(--rose)' };
-  const sColor = statusColorMap[s.status];
-
-  const alertTagsHtml = s.alerts.map(a =>
-    `<div class="tag-small tag-${a.type}">${a.label}</div>`
-  ).join('');
-
-  const avgAttend = (s.attendances.reduce((a,b)=>a+b,0)/s.attendances.length).toFixed(1);
-  const scoreDiff = s.scores[5] - s.scores[4];
-  const diffStr = scoreDiff > 0 ? `↑${scoreDiff}` : scoreDiff < 0 ? `↓${Math.abs(scoreDiff)}` : '持平';
-  const diffColor = scoreDiff > 0 ? 'var(--green)' : scoreDiff < 0 ? 'var(--rose)' : 'var(--dim)';
-
-  openModal(s.name, `${s.cls} · ${s.status}`, `
-    <div class="profile-header">
-      <div class="profile-avatar">${s.name[0]}</div>
-      <div>
-        <div class="profile-info-name">${s.name}</div>
-        <div class="profile-info-meta">${s.cls} &nbsp;·&nbsp; 学号 #${String(s.id).padStart(3,'0')}</div>
-        <div class="profile-tags">
-          <div class="tag-small" style="border-color:${sColor};color:${sColor}">${s.status}</div>
-          ${alertTagsHtml}
-        </div>
-      </div>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-mini">
-        <div class="stat-mini-label">本月成绩</div>
-        <div class="stat-mini-val" style="color:var(--amber)">${s.scores[5]}</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-label">环比变化</div>
-        <div class="stat-mini-val" style="color:${diffColor}">${diffStr}</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-label">平均出勤</div>
-        <div class="stat-mini-val" style="color:var(--green)">${avgAttend}%</div>
-      </div>
-    </div>
-
-    <div class="modal-section-title">近6个月成绩趋势</div>
-    <div class="score-trend">${trendBarsHtml}</div>
-
-    <div class="modal-section-title">本月各科成绩</div>
-    <div class="subject-mini">${subjHtml}</div>
-  `);
-}
-
-// ═══════════════════════════════════════════════
-// ACTIVITY FEED (dynamic)
-// ═══════════════════════════════════════════════
-
-const FEED_EVENTS = [
-  { text: '张伟涛 本月数学成绩提升 <strong>7分</strong>，表现优秀', color:'var(--green)',  time:'09:42' },
-  { text: '杨博文 连续3次成绩下滑，建议约谈家长', color:'var(--rose)',   time:'09:15' },
-  { text: '谢雨欣 蝉联本班<strong>第一名</strong>，平均分 95.4', color:'var(--amber)',  time:'08:58' },
-  { text: '孙明宇 本月出勤率 82%，已发送预警通知', color:'var(--rose)',   time:'08:30' },
-  { text: '韩静怡 成绩环比上升 <strong>4分</strong>，进步明显', color:'var(--cyan)',   time:'昨日' },
-  { text: '唐子豪 物理成绩 55分，触发低分预警', color:'var(--rose)',   time:'昨日' },
-  { text: '李梦琪 保持全勤记录，出勤率 <strong>100%</strong>', color:'var(--green)',  time:'前日' },
-];
-
-// ═══════════════════════════════════════════════
-// INIT & RENDER
-// ═══════════════════════════════════════════════
-
-function renderAll() {
-  updateKPIs();
-  buildMonthlyChart();
-  buildStatusChart();
-  buildSubjectChart();
-  buildAttendChart();
-  buildAttnList();
-}
-
-// Clock
-function updateClock() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const ss = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
-
-  const y = now.getFullYear();
-  const mo = now.getMonth()+1;
-  const d = now.getDate();
-  const days = ['日','一','二','三','四','五','六'];
-  document.getElementById('clockDate').textContent =
-    `${y}年${mo}月${d}日 · 周${days[now.getDay()]}`;
-
-  document.getElementById('lastUpdate').textContent =
-    `${hh}:${mm}:${ss}`;
-}
-
-// Class filter
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentClass = btn.dataset.class;
-    renderAll();
-  });
+// ═══ BUILD PICKER ═══
+const picker=document.getElementById('stuPicker');
+STUDENTS.forEach((s,i)=>{
+  const btn=document.createElement('div');
+  btn.className='stu-btn'+(i===0?' active':'');
+  btn.innerHTML=`<div class="stu-avatar">${s.avatar}</div>
+    <div class="stu-name-sm">${s.name}</div>
+    <div class="stu-score-sm">${s.total}</div>`;
+  btn.addEventListener('click',()=>renderStudent(i));
+  picker.appendChild(btn);
 });
 
-// Modal close
-document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
+// ═══ NEURAL BG ═══
+(function(){
+  const cv=document.getElementById('neuralBg'),ctx=cv.getContext('2d');
+  let W,H,nodes=[];
+  const N=50,MAX=155;
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  addEventListener('resize',resize);resize();
+  for(let i=0;i<N;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.8+.8});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<MAX){ctx.beginPath();ctx.strokeStyle=`rgba(0,229,255,${(1-d/MAX)*.1})`;
+        ctx.lineWidth=.5;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}}
+    nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,229,255,0.4)';ctx.shadowColor='rgba(0,229,255,.7)';
+      ctx.shadowBlur=5;ctx.fill();ctx.shadowBlur=0;
+      n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;});
+    requestAnimationFrame(draw);}
+  draw();
+})();
+
+// ═══ CLOCK ═══
+function tick(){
+  const n=new Date(),pad=v=>String(v).padStart(2,'0');
+  document.getElementById('clockTime').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const days=['日','一','二','三','四','五','六'];
+  document.getElementById('clockDate').textContent=`${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日 · 周${days[n.getDay()]}`;
+  document.getElementById('lastUpdate').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+setInterval(tick,1000);tick();
+
+// ═══ MASCOT ═══
+document.getElementById('aiMascotWrap').addEventListener('click',()=>{
+  document.getElementById('aiPanel').classList.toggle('open');
+});
+document.getElementById('aiClose').addEventListener('click',e=>{
+  e.stopPropagation();document.getElementById('aiPanel').classList.remove('open');
 });
 
-// Init
-setInterval(updateClock, 1000);
-updateClock();
-renderAll();
+// ═══ INIT ═══
+renderStudent(0);
 </script>
 </body>
 </html>
