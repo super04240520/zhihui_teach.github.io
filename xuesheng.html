@@ -58,8 +58,54 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
   animation:livePulse 1.3s ease-in-out infinite;}
 @keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7);}50%{box-shadow:0 0 0 5px rgba(16,185,129,0);}}
 
-/* Student Picker */
-.stu-picker{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:nowrap;overflow-x:auto;}
+/* Summary Hub */
+.overview-hub{display:grid;grid-template-columns:minmax(260px,1.15fr) minmax(0,1.85fr);gap:10px;margin-bottom:10px;}
+.class-summary-card{background:linear-gradient(135deg,rgba(0,229,255,.09),rgba(139,92,246,.08));
+  border:1px solid rgba(0,229,255,.2);border-radius:12px;padding:12px 14px;cursor:pointer;
+  transition:all .18s;display:flex;flex-direction:column;gap:10px;min-height:132px;}
+.class-summary-card:hover{border-color:rgba(0,229,255,.4);box-shadow:0 0 18px rgba(0,229,255,.12);}
+.class-summary-card.active{border-color:rgba(0,229,255,.75);box-shadow:0 0 20px rgba(0,229,255,.16);}
+.sum-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.sum-title{font-size:.7rem;font-weight:800;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;}
+.sum-tag{font-size:.55rem;padding:2px 8px;border-radius:999px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:var(--cyan);}
+.sum-score-row{display:flex;align-items:flex-end;gap:10px;}
+.sum-score{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:var(--cyan);line-height:1;text-shadow:0 0 16px rgba(0,229,255,.28);}
+.sum-score-desc{font-size:.62rem;color:var(--dim);padding-bottom:4px;}
+.sum-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.sum-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:7px 8px;}
+.sum-stat-label{font-size:.52rem;color:var(--dim);letter-spacing:.08em;}
+.sum-stat-value{font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:700;color:var(--text);margin-top:4px;}
+.sum-foot{display:flex;justify-content:space-between;gap:10px;font-size:.58rem;color:var(--dim);}
+
+.group-board{background:rgba(0,229,255,.03);border:1px solid rgba(0,229,255,.12);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-height:132px;}
+.group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.group-title{font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase;}
+.group-sub{font-size:.56rem;color:var(--dim);}
+.group-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1;}
+.group-card{padding:10px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:5px;min-height:96px;}
+.group-card:hover{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.06);}
+.group-card.active{border-color:rgba(0,229,255,.65);background:rgba(0,229,255,.12);box-shadow:0 0 18px rgba(0,229,255,.12);}
+.group-rank{font-family:'Orbitron',sans-serif;font-size:.55rem;color:var(--amber);letter-spacing:.08em;}
+.group-name{font-size:.74rem;font-weight:700;color:var(--text);}
+.group-score{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:800;color:var(--cyan);line-height:1.1;}
+.group-meta{font-size:.56rem;color:var(--dim);line-height:1.5;}
+.group-strong{font-size:.55rem;color:var(--green);}
+
+.view-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;margin-bottom:10px;
+  background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.12);border-radius:10px;}
+.view-main{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.view-label{font-size:.54rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;}
+.view-title{font-size:.74rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.view-desc{font-size:.58rem;color:var(--dim);}
+
+.personal-entry{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);border-radius:10px;}
+.entry-label{display:flex;flex-direction:column;gap:3px;min-width:112px;flex-shrink:0;}
+.entry-title{font-size:.65rem;font-weight:700;letter-spacing:.08em;color:var(--cyan);text-transform:uppercase;}
+.entry-sub{font-size:.56rem;color:var(--dim);line-height:1.5;}
+
+.stu-picker{display:flex;align-items:center;gap:6px;flex:1;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;}
 .stu-btn{display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:8px;
   border:1px solid rgba(0,229,255,.15);background:rgba(0,229,255,.04);
   cursor:pointer;transition:all .18s;gap:2px;min-width:56px;flex-shrink:0;}
@@ -231,6 +277,10 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
 @media(max-width:1023px){
   html,body{overflow-y:auto;overflow-x:hidden;}
   .screen{height:auto;min-height:100vh;padding:10px 12px 16px;}
+  .overview-hub{grid-template-columns:1fr;}
+  .group-list{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .personal-entry{flex-direction:column;align-items:flex-start;}
+  .entry-label{min-width:0;}
   .eval-grid{grid-template-columns:repeat(2,1fr);grid-template-rows:none;gap:8px;}
   .panel{min-height:280px;}
   /* gauge panel is 7th child → target with :nth-child(7) */
@@ -243,6 +293,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
   .hd-brand{flex:0 0 100%;flex-wrap:wrap;}
   .hd-title{font-size:.72rem;}
   .hd-sub{display:none;}
+  .sum-stats{grid-template-columns:repeat(2,1fr);}
+  .group-list{grid-template-columns:1fr;}
+  .view-strip{flex-direction:column;align-items:flex-start;}
   .stu-picker{flex:0 0 100%;overflow-x:auto;justify-content:flex-start;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
   .stu-btn{min-width:50px;padding:4px 8px;}
   .hd-right{display:none;}
@@ -284,11 +337,38 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
       </div>
       <div class="live-badge" style="margin-left:14px"><div class="live-dot"></div>EVAL</div>
     </div>
-    <div class="stu-picker" id="stuPicker"></div>
     <div class="hd-right">
       <div class="clock-time" id="clockTime">--:--:--</div>
       <div class="clock-date" id="clockDate">----年--月--日</div>
     </div>
+  </div>
+
+  <div class="overview-hub">
+    <div class="class-summary-card active" id="classSummaryCard"></div>
+    <div class="group-board">
+      <div class="group-head">
+        <div class="group-title">小组总评排行</div>
+        <div class="group-sub">点击小组查看当前小组模块均分与组内表现</div>
+      </div>
+      <div class="group-list" id="groupSummaryList"></div>
+    </div>
+  </div>
+
+  <div class="view-strip">
+    <div class="view-main">
+      <div class="view-label">当前主视图</div>
+      <div class="view-title" id="viewTitle">班级总评</div>
+      <div class="view-desc" id="viewDesc">默认展示班级整体表现，小组与个人作为下钻入口。</div>
+    </div>
+    <div class="score-chip sc-cyan" id="viewChip">班级均分 / 100</div>
+  </div>
+
+  <div class="personal-entry">
+    <div class="entry-label">
+      <div class="entry-title">个人明细入口</div>
+      <div class="entry-sub">保留学生画像，但切换为次级入口，不再作为页面默认主视图。</div>
+    </div>
+    <div class="stu-picker" id="stuPicker"></div>
   </div>
 
   <div class="eval-grid">
@@ -529,6 +609,23 @@ const STUDENTS = [
   },
 ];
 
+const GROUPS = [
+  {name:'第一组', members:[0,1]},
+  {name:'第二组', members:[2,3]},
+  {name:'第三组', members:[4,5]},
+];
+
+const MODULE_META = [
+  {key:'m1', label:'M1', title:'课前学习习惯', max:10, color:'var(--cyan)'},
+  {key:'m2', label:'M2', title:'课堂参与表现', max:10, color:'var(--blue)'},
+  {key:'m3', label:'M3', title:'理论知识掌握', max:15, color:'var(--violet)'},
+  {key:'m4', label:'M4', title:'直播设计能力', max:15, color:'var(--amber)'},
+  {key:'m5', label:'M5', title:'直播实操表现', max:15, color:'var(--green)'},
+  {key:'m6', label:'M6', title:'复盘优化能力', max:10, color:'var(--teal)'},
+  {key:'m7', label:'M7', title:'AI 与创新应用', max:15, color:'var(--violet)'},
+  {key:'m8', label:'M8', title:'综合直播项目成果', max:10, color:'#fbbf24'},
+];
+
 // ═══ HELPERS ═══
 function getGrade(s){
   if(s>=90)return{text:'优秀 · A',color:'#34d399'};
@@ -536,12 +633,94 @@ function getGrade(s){
   if(s>=70)return{text:'及格 · C',color:'#f59e0b'};
   return{text:'待提升 · D',color:'#f43f5e'};
 }
+function round1(n){return Math.round(n*10)/10;}
+function avg(nums){return nums.reduce((a,b)=>a+b,0)/nums.length;}
 function subBar(subs,color){
   return subs.map(b=>`<div class="sub-row">
     <div class="sub-name">${b.n}</div>
     <div class="sub-bg"><div class="sub-fill" style="width:0%;background:${color}" data-pct="${(b.v/b.max*100).toFixed(1)}"></div></div>
     <div class="sub-val" style="color:${color}">${b.v}/${b.max}</div>
   </div>`).join('');
+}
+function avgSubs(items,key){
+  return items[0][key].subs.map((sub,i)=>({
+    n:sub.n,
+    max:sub.max,
+    v:round1(avg(items.map(item=>item[key].subs[i].v))),
+  }));
+}
+function avgData(items,key,prop){
+  return items[0][key][prop].map((_,i)=>round1(avg(items.map(item=>item[key][prop][i]))));
+}
+function moduleScoreMap(entity){
+  return MODULE_META.map(meta=>({
+    ...meta,
+    score:entity[meta.key].score,
+    pct:entity[meta.key].score/meta.max*100,
+  }));
+}
+function aggregateEntity(name, avatar, members, type, groupName=''){
+  const entity={
+    type,
+    name,
+    avatar,
+    memberNames:members.map(m=>m.name),
+    memberCount:members.length,
+    studentCount:members.length,
+    m1:{score:round1(avg(members.map(m=>m.m1.score))),subs:avgSubs(members,'m1')},
+    m2:{score:round1(avg(members.map(m=>m.m2.score))),data:avgData(members,'m2','data')},
+    m3:{score:round1(avg(members.map(m=>m.m3.score))),data:avgData(members,'m3','data')},
+    m4:{score:round1(avg(members.map(m=>m.m4.score))),data:avgData(members,'m4','data'),subs:avgSubs(members,'m4')},
+    m5:{score:round1(avg(members.map(m=>m.m5.score))),subs:avgSubs(members,'m5')},
+    m6:{score:round1(avg(members.map(m=>m.m6.score))),trend:avgData(members,'m6','trend'),subs:avgSubs(members,'m6')},
+    m7:{score:round1(avg(members.map(m=>m.m7.score))),data:avgData(members,'m7','data')},
+    m8:{score:round1(avg(members.map(m=>m.m8.score))),subs:avgSubs(members,'m8')},
+    total:round1(avg(members.map(m=>m.total))),
+  };
+  const modules=moduleScoreMap(entity).sort((a,b)=>b.pct-a.pct);
+  const topStudent=[...members].sort((a,b)=>b.total-a.total)[0];
+  const lowStudent=[...members].sort((a,b)=>a.total-b.total)[0];
+  entity.metrics={
+    topStudent,
+    lowStudent,
+    topModule:modules[0],
+    weakModule:modules[modules.length-1],
+    above80:members.filter(m=>m.total>=80).length,
+    above90:members.filter(m=>m.total>=90).length,
+    groupName:groupName||name,
+  };
+  entity.insights=[
+    {ico:'🏆',tag:'tg-g',label:'概览',text:`${name}当前平均分为 <strong style="color:var(--cyan)">${entity.total}分</strong>，最高为 ${topStudent.name} ${topStudent.total} 分。`},
+    {ico:'📚',tag:'tg-i',label:'强项',text:`整体最强模块为 <strong style="color:${modules[0].color}">${modules[0].label} · ${modules[0].title}</strong>，平均达 ${round1(modules[0].pct)}%。`},
+    {ico:'⚠️',tag:'tg-w',label:'短板',text:`当前短板模块是 <strong style="color:${modules[modules.length-1].color}">${modules[modules.length-1].label}</strong>，建议优先补强。`},
+    {ico:'👥',tag:'tg-p',label:'成员',text:`${type==='class'?'班级包含':'小组包含'} ${members.map(m=>m.name).join('、')}，良好及以上 ${entity.metrics.above80}/${members.length} 人。`},
+    {ico:'🔮',tag:'tg-p',label:'建议',text:`若优先提升 ${modules[modules.length-1].label} 与 ${modules[modules.length-2].label}，${type==='class'?'班级':'小组'}整体表现还有明显上升空间。`},
+  ];
+  return entity;
+}
+function getBigLabel(score){
+  return score>=9?'满分 10 分 · 优秀':score>=7?'满分 10 分 · 良好':'满分 10 分 · 待提升';
+}
+function getEntityMeta(entity,view){
+  if(view.type==='class'){
+    return {
+      title:'班级总评 · 模块均分视角',
+      desc:`覆盖 ${entity.studentCount} 名学生，当前显示班级整体模块均分与班级洞察。`,
+      chip:`班级均分 ${entity.total} / 100`,
+    };
+  }
+  if(view.type==='group'){
+    return {
+      title:`${entity.name} · 小组总评`,
+      desc:`当前显示 ${entity.memberNames.join('、')} 的小组均分与组内洞察。`,
+      chip:`组均分 ${entity.total} / 100`,
+    };
+  }
+  return {
+    title:`${entity.name} · 个人明细`,
+    desc:'当前已切换到单个学生画像，模块数据恢复为个人详细成绩。',
+    chip:`个人总分 ${entity.total} / 100`,
+  };
 }
 function animBars(){
   // Trigger bar fill animation after paint
@@ -558,6 +737,10 @@ Chart.defaults.borderColor='rgba(255,255,255,0.05)';
 Chart.defaults.font.family="'PingFang SC','Microsoft YaHei',system-ui,sans-serif";
 Chart.defaults.font.size=11;
 let CH={};
+let _gaugeScore=12.5;
+let CURRENT_VIEW={type:'class'};
+const CLASS_ENTITY=aggregateEntity('班级总评','班',STUDENTS,'class');
+const GROUP_ENTITIES=GROUPS.map((group,i)=>aggregateEntity(group.name,`G${i+1}`,group.members.map(idx=>STUDENTS[idx]),'group',group.name));
 
 function initCharts(s){
   Object.values(CH).forEach(c=>c&&c.destroy());CH={};
@@ -665,10 +848,73 @@ function animTotal(target){
 }
 
 // ═══ RENDER ═══
-let _gaugeScore=12.5;
-function renderStudent(idx){
-  const s=STUDENTS[idx];
-  document.querySelectorAll('.stu-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+function getCurrentEntity(view){
+  if(view.type==='class')return CLASS_ENTITY;
+  if(view.type==='group')return GROUP_ENTITIES[view.index];
+  return STUDENTS[view.index];
+}
+function renderClassSummary(entity,isActive){
+  document.getElementById('classSummaryCard').classList.toggle('active',isActive);
+  document.getElementById('classSummaryCard').innerHTML=`
+    <div class="sum-head">
+      <div class="sum-title">班级总评</div>
+      <div class="sum-tag">默认主视图</div>
+    </div>
+    <div class="sum-score-row">
+      <div class="sum-score">${entity.total}</div>
+      <div class="sum-score-desc">班级平均分 / 100</div>
+    </div>
+    <div class="sum-stats">
+      <div class="sum-stat"><div class="sum-stat-label">最高分</div><div class="sum-stat-value">${entity.metrics.topStudent.total}</div></div>
+      <div class="sum-stat"><div class="sum-stat-label">最低分</div><div class="sum-stat-value">${entity.metrics.lowStudent.total}</div></div>
+      <div class="sum-stat"><div class="sum-stat-label">80+人数</div><div class="sum-stat-value">${entity.metrics.above80}/${entity.studentCount}</div></div>
+      <div class="sum-stat"><div class="sum-stat-label">90+人数</div><div class="sum-stat-value">${entity.metrics.above90}/${entity.studentCount}</div></div>
+    </div>
+    <div class="sum-foot">
+      <div>最强模块：${entity.metrics.topModule.label}</div>
+      <div>短板模块：${entity.metrics.weakModule.label}</div>
+    </div>`;
+}
+function renderGroups(){
+  const groups=[...GROUP_ENTITIES].sort((a,b)=>b.total-a.total);
+  document.getElementById('groupSummaryList').innerHTML=groups.map((group,rank)=>{
+    const realIndex=GROUP_ENTITIES.findIndex(item=>item.name===group.name);
+    return `<div class="group-card${CURRENT_VIEW.type==='group'&&CURRENT_VIEW.index===realIndex?' active':''}" data-group-index="${realIndex}">
+      <div class="group-rank">TOP ${rank+1}</div>
+      <div class="group-name">${group.name}</div>
+      <div class="group-score">${group.total}</div>
+      <div class="group-meta">${group.memberNames.join('、')}<br>组内最佳：${group.metrics.topStudent.name}</div>
+      <div class="group-strong">强项 ${group.metrics.topModule.label} · ${group.metrics.topModule.title}</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.group-card').forEach(card=>{
+    card.addEventListener('click',()=>renderView({type:'group',index:Number(card.dataset.groupIndex)}));
+  });
+}
+function renderStudents(){
+  const picker=document.getElementById('stuPicker');
+  picker.innerHTML='';
+  STUDENTS.forEach((s,i)=>{
+    const btn=document.createElement('div');
+    btn.className='stu-btn'+(CURRENT_VIEW.type==='student'&&CURRENT_VIEW.index===i?' active':'');
+    btn.innerHTML=`<div class="stu-avatar">${s.avatar}</div>
+      <div class="stu-name-sm">${s.name}</div>
+      <div class="stu-score-sm">${s.total}</div>`;
+    btn.addEventListener('click',()=>renderView({type:'student',index:i}));
+    picker.appendChild(btn);
+  });
+}
+function renderView(view){
+  CURRENT_VIEW=view;
+  const s=getCurrentEntity(view);
+  const meta=getEntityMeta(s,view);
+  renderClassSummary(CLASS_ENTITY,view.type==='class');
+  renderGroups();
+  renderStudents();
+
+  document.getElementById('viewTitle').textContent=meta.title;
+  document.getElementById('viewDesc').textContent=meta.desc;
+  document.getElementById('viewChip').textContent=meta.chip;
 
   document.getElementById('chip1').textContent=`${s.m1.score} / 10`;
   document.getElementById('chip2').textContent=`${s.m2.score} / 10`;
@@ -687,7 +933,7 @@ function renderStudent(idx){
   document.getElementById('subM6').innerHTML=subBar(s.m6.subs,'var(--teal)');
 
   document.getElementById('bigScore').textContent=s.m8.score.toFixed(1);
-  document.getElementById('bigLabel').textContent=s.m8.score>=9?'满分 10 分 · 优秀':s.m8.score>=7?'满分 10 分 · 良好':'满分 10 分 · 待提升';
+  document.getElementById('bigLabel').textContent=getBigLabel(s.m8.score);
   document.getElementById('bigSub').innerHTML=s.m8.subs.map((b,i)=>`
     <div class="big-sub-row"><div class="big-sub-name">✦ ${b.n}</div><div class="big-sub-score">${b.v}/${b.max}</div></div>
     <div class="sub-bg"${i===0?' style="margin-bottom:6px"':''}><div class="sub-fill" style="width:0%;background:var(--amber)" data-pct="${(b.v/b.max*100).toFixed(1)}"></div></div>`).join('');
@@ -696,15 +942,10 @@ function renderStudent(idx){
   document.getElementById('totalGrade').textContent=gr.text;
   document.getElementById('totalGrade').style.color=gr.color;
 
-  document.getElementById('modulePills').innerHTML=`
-    <div class="mpill" style="border-color:rgba(0,229,255,.3);color:var(--cyan)">M1 ${s.m1.score}</div>
-    <div class="mpill" style="border-color:rgba(59,130,246,.3);color:var(--blue)">M2 ${s.m2.score}</div>
-    <div class="mpill" style="border-color:rgba(139,92,246,.3);color:var(--violet)">M3 ${s.m3.score}</div>
-    <div class="mpill" style="border-color:rgba(245,158,11,.3);color:var(--amber)">M4 ${s.m4.score}</div>
-    <div class="mpill" style="border-color:rgba(16,185,129,.3);color:var(--green)">M5 ${s.m5.score}</div>
-    <div class="mpill" style="border-color:rgba(20,184,166,.3);color:var(--teal)">M6 ${s.m6.score}</div>
-    <div class="mpill" style="border-color:rgba(139,92,246,.3);color:var(--violet)">M7 ${s.m7.score}</div>
-    <div class="mpill" style="border-color:rgba(251,191,36,.4);color:#fbbf24">M8 ${s.m8.score}</div>`;
+  document.getElementById('modulePills').innerHTML=MODULE_META.map(meta=>`
+    <div class="mpill" style="border-color:${meta.color==='var(--cyan)'?'rgba(0,229,255,.3)':meta.color==='var(--blue)'?'rgba(59,130,246,.3)':meta.color==='var(--violet)'?'rgba(139,92,246,.3)':meta.color==='var(--amber)'?'rgba(245,158,11,.3)':meta.color==='var(--green)'?'rgba(16,185,129,.3)':meta.color==='var(--teal)'?'rgba(20,184,166,.3)':'rgba(251,191,36,.4)'};color:${meta.color}">
+      ${meta.label} ${s[meta.key].score}
+    </div>`).join('');
 
   document.getElementById('aiInsights').innerHTML=s.insights.map((ins,i)=>`
     <div class="api" style="animation-delay:${i*.06}s">
@@ -716,21 +957,8 @@ function renderStudent(idx){
   animBars();
   _gaugeScore=s.m5.score;
   setTimeout(()=>drawGauge(s.m5.score),50);
-  window.onresize=()=>drawGauge(_gaugeScore);
   animTotal(s.total);
 }
-
-// ═══ BUILD PICKER ═══
-const picker=document.getElementById('stuPicker');
-STUDENTS.forEach((s,i)=>{
-  const btn=document.createElement('div');
-  btn.className='stu-btn'+(i===0?' active':'');
-  btn.innerHTML=`<div class="stu-avatar">${s.avatar}</div>
-    <div class="stu-name-sm">${s.name}</div>
-    <div class="stu-score-sm">${s.total}</div>`;
-  btn.addEventListener('click',()=>renderStudent(i));
-  picker.appendChild(btn);
-});
 
 // ═══ NEURAL BG ═══
 (function(){
@@ -772,9 +1000,11 @@ document.getElementById('aiMascotWrap').addEventListener('click',()=>{
 document.getElementById('aiClose').addEventListener('click',e=>{
   e.stopPropagation();document.getElementById('aiPanel').classList.remove('open');
 });
+document.getElementById('classSummaryCard').addEventListener('click',()=>renderView({type:'class'}));
+window.addEventListener('resize',()=>drawGauge(_gaugeScore));
 
 // ═══ INIT ═══
-renderStudent(0);
+renderView({type:'class'});
 </script>
 </body>
 </html>
