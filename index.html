@@ -520,6 +520,30 @@
       line-height: 1.6;
       padding: 0 4px;
     }
+       .nav-btn {
+           background: linear-gradient(135deg, rgba(38,217,139,0.12), rgba(38,217,139,0.06));
+           border: 1px solid rgba(38,217,139,0.4);
+           color: var(--green-cat);
+           padding: 12px 28px;
+           border-radius: 60px;
+           font-family: 'Noto Serif SC', serif;
+           font-size: 0.85rem;
+           font-weight: 700;
+           letter-spacing: 0.08em;
+           cursor: pointer;
+           transition: all 0.2s;
+           text-decoration: none;
+           display: inline-flex;
+           align-items: center;
+           gap: 7px;
+       }
+       .nav-btn:hover {
+           background: rgba(38,217,139,0.18);
+           border-color: rgba(38,217,139,0.7);
+           box-shadow: 0 0 22px rgba(38,217,139,0.2);
+           transform: translateY(-1px);
+       }
+       .nav-btn:active { transform: scale(0.97); }
 
     /* ── Responsive ── */
     @media (max-width: 520px) {
@@ -568,8 +592,11 @@
   </div>
 
   <!-- Bubble grid -->
-  <div id="bubblesGrid" class="bubbles-grid"></div>
-
+  <!-- <div id="bubblesGrid" class="bubbles-grid"></div> -->
+   <div class="bottom-btns">
+       <button id="resetGameBtn" class="reset-btn">↺ &nbsp;重来一次 · 强化训练</button>
+       <a href="xuesheng.html" target="_blank" class="nav-btn">📊 &nbsp;学情监控大屏</a>
+   </div>
   <!-- Bottom -->
   <div class="bottom-section">
     <button id="resetGameBtn" class="reset-btn">⟳ &nbsp;重来一次 · 强化训练</button>
