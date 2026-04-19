@@ -78,10 +78,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
 .sum-foot{display:flex;justify-content:space-between;gap:10px;font-size:.58rem;color:var(--dim);}
 
 .group-board{background:rgba(0,229,255,.03);border:1px solid rgba(0,229,255,.12);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-height:132px;}
-.group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .group-title{font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase;}
 .group-sub{font-size:.56rem;color:var(--dim);}
-.group-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1;}
+.group-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.shuffle-btn{padding:5px 10px;border-radius:999px;border:1px solid rgba(0,229,255,.28);background:rgba(0,229,255,.08);color:var(--cyan);
+  cursor:pointer;font-size:.56rem;font-weight:700;letter-spacing:.06em;transition:all .18s;}
+.shuffle-btn:hover{border-color:rgba(0,229,255,.48);background:rgba(0,229,255,.14);box-shadow:0 0 12px rgba(0,229,255,.12);}
+.group-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:1;}
 .group-card{padding:10px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
   cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:5px;min-height:96px;}
 .group-card:hover{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.06);}
@@ -278,7 +282,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
   html,body{overflow-y:auto;overflow-x:hidden;}
   .screen{height:auto;min-height:100vh;padding:10px 12px 16px;}
   .overview-hub{grid-template-columns:1fr;}
-  .group-list{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .group-list{grid-template-columns:repeat(2,minmax(0,1fr));}
   .personal-entry{flex-direction:column;align-items:flex-start;}
   .entry-label{min-width:0;}
   .eval-grid{grid-template-columns:repeat(2,1fr);grid-template-rows:none;gap:8px;}
@@ -294,6 +298,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
   .hd-title{font-size:.72rem;}
   .hd-sub{display:none;}
   .sum-stats{grid-template-columns:repeat(2,1fr);}
+  .group-head{flex-direction:column;align-items:flex-start;}
+  .group-actions{width:100%;justify-content:flex-end;}
   .group-list{grid-template-columns:1fr;}
   .view-strip{flex-direction:column;align-items:flex-start;}
   .stu-picker{flex:0 0 100%;overflow-x:auto;justify-content:flex-start;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
@@ -347,8 +353,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
     <div class="class-summary-card active" id="classSummaryCard"></div>
     <div class="group-board">
       <div class="group-head">
-        <div class="group-title">小组总评排行</div>
-        <div class="group-sub">点击小组查看当前小组模块均分与组内表现</div>
+        <div>
+          <div class="group-title">小组总评排行</div>
+          <div class="group-sub">点击小组查看 6 名成员，支持重新随机分组</div>
+        </div>
+        <div class="group-actions">
+          <button class="shuffle-btn" id="reshuffleBtn">重新随机分组</button>
+        </div>
       </div>
       <div class="group-list" id="groupSummaryList"></div>
     </div>
@@ -366,7 +377,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
   <div class="personal-entry">
     <div class="entry-label">
       <div class="entry-title">个人明细入口</div>
-      <div class="entry-sub">保留学生画像，但切换为次级入口，不再作为页面默认主视图。</div>
+      <div class="entry-sub" id="entrySub">当前展示全部 24 名学生，点击任一学生可进入个人明细。</div>
     </div>
     <div class="stu-picker" id="stuPicker"></div>
   </div>
@@ -492,127 +503,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
 
 <script>
 // ═══ STUDENT DATA ═══
-const STUDENTS = [
-  {
-    name:'陈美琳', avatar:'陈',
-    m1:{score:9.0,subs:[{n:'预习完成率',v:4.5,max:5},{n:'任务准时率',v:2.8,max:3},{n:'话术初稿完整',v:1.7,max:2}]},
-    m2:{score:8.8,data:[3.8,2.5,2.5,8.8]},
-    m3:{score:14.0,data:[94,94,93.3,90]},
-    m4:{score:12.5,data:[6.5,6.0],subs:[{n:'取信话术',v:6.5,max:8},{n:'促单话术',v:6.0,max:7}]},
-    m5:{score:12.5,subs:[{n:'镜头感',v:3.5,max:4},{n:'场控稳定性',v:3.3,max:4},{n:'突发应对',v:3.0,max:4},{n:'流程完整性',v:2.7,max:3}]},
-    m6:{score:7.0,trend:[5.0,6.0,6.5,7.0],subs:[{n:'数据反馈使用',v:3.5,max:5},{n:'反思改进落实',v:3.5,max:5}]},
-    m7:{score:9.0,data:[3.0,1.8,2.0,2.2]},
-    m8:{score:9.5,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.7,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.8,max:4}]},
-    total:82.3,
-    insights:[
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识模块得分最高 <strong style="color:var(--violet)">93.3%</strong>，取信/促单理论掌握扎实。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'AI创新应用模块仅 <strong style="color:var(--rose)">60%</strong>，建议加强 DeepSeek 话术优化实践。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力持续进步，4次复盘从 5.0→7.0，提升 <strong style="color:var(--teal)">40%</strong>。'},
-      {ico:'🎬',tag:'tg-g',label:'亮点',text:'直播项目成果 9.5/10，实战转化能力 <strong style="color:var(--amber)">优秀</strong>。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'若提升 M6/M7 模块，预计综合评分可突破 <strong style="color:var(--cyan)">88分</strong>。'},
-    ]
-  },
-  {
-    name:'李子豪', avatar:'李',
-    m1:{score:7.5,subs:[{n:'预习完成率',v:3.8,max:5},{n:'任务准时率',v:2.2,max:3},{n:'话术初稿完整',v:1.5,max:2}]},
-    m2:{score:9.2,data:[3.9,2.8,2.5,9.2]},
-    m3:{score:11.8,data:[80,82,79,77]},
-    m4:{score:13.5,data:[7.2,6.3],subs:[{n:'取信话术',v:7.2,max:8},{n:'促单话术',v:6.3,max:7}]},
-    m5:{score:13.2,subs:[{n:'镜头感',v:3.8,max:4},{n:'场控稳定性',v:3.5,max:4},{n:'突发应对',v:3.2,max:4},{n:'流程完整性',v:2.7,max:3}]},
-    m6:{score:8.5,trend:[4.5,6.0,7.5,8.5],subs:[{n:'数据反馈使用',v:4.2,max:5},{n:'反思改进落实',v:4.3,max:5}]},
-    m7:{score:11.2,data:[4.0,2.5,2.5,2.2]},
-    m8:{score:8.8,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.2,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.6,max:4}]},
-    total:83.7,
-    insights:[
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'直播设计能力突出，M4得分 <strong style="color:var(--amber)">90%</strong>，话术设计能力强。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力提升显著，从 4.5→8.5，进步 <strong style="color:var(--teal)">89%</strong>，成长最快。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'理论知识模块偏弱仅 <strong style="color:var(--rose)">78.7%</strong>，建议系统复习促单心理效应。'},
-      {ico:'🎬',tag:'tg-g',label:'亮点',text:'实操表现 13.2/15，镜头感与场控均表现出色。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'加强 M3 理论基础，综合评分有望达到 <strong style="color:var(--cyan)">90分</strong>。'},
-    ]
-  },
-  {
-    name:'王雅婷', avatar:'王',
-    m1:{score:9.8,subs:[{n:'预习完成率',v:5.0,max:5},{n:'任务准时率',v:3.0,max:3},{n:'话术初稿完整',v:1.8,max:2}]},
-    m2:{score:7.5,data:[3.2,2.0,2.3,7.5]},
-    m3:{score:14.5,data:[97,96,95,93]},
-    m4:{score:10.8,data:[5.8,5.0],subs:[{n:'取信话术',v:5.8,max:8},{n:'促单话术',v:5.0,max:7}]},
-    m5:{score:10.5,subs:[{n:'镜头感',v:2.8,max:4},{n:'场控稳定性',v:2.8,max:4},{n:'突发应对',v:2.5,max:4},{n:'流程完整性',v:2.4,max:3}]},
-    m6:{score:9.0,trend:[6.0,7.0,8.0,9.0],subs:[{n:'数据反馈使用',v:4.5,max:5},{n:'反思改进落实',v:4.5,max:5}]},
-    m7:{score:10.5,data:[3.5,2.8,2.2,2.0]},
-    m8:{score:8.2,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:4.8,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.4,max:4}]},
-    total:80.8,
-    insights:[
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识顶尖，M3得分 <strong style="color:var(--violet)">96.7%</strong>，班级理论第一。'},
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'课前准备近满分，预习与任务准时率双双达标。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'直播实操表现仅 <strong style="color:var(--rose)">70%</strong>，镜头感与场控需重点训练。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力稳步提升 6.0→9.0，方法论掌握扎实。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'突破 M5 实操瓶颈，评分可达 <strong style="color:var(--cyan)">88分</strong>。'},
-    ]
-  },
-  {
-    name:'张鹏飞', avatar:'张',
-    m1:{score:6.2,subs:[{n:'预习完成率',v:3.0,max:5},{n:'任务准时率',v:2.0,max:3},{n:'话术初稿完整',v:1.2,max:2}]},
-    m2:{score:8.0,data:[3.5,2.2,2.3,8.0]},
-    m3:{score:10.5,data:[72,70,73,68]},
-    m4:{score:11.0,data:[6.0,5.0],subs:[{n:'取信话术',v:6.0,max:8},{n:'促单话术',v:5.0,max:7}]},
-    m5:{score:14.0,subs:[{n:'镜头感',v:4.0,max:4},{n:'场控稳定性',v:3.8,max:4},{n:'突发应对',v:3.5,max:4},{n:'流程完整性',v:2.7,max:3}]},
-    m6:{score:5.5,trend:[3.5,4.0,4.5,5.5],subs:[{n:'数据反馈使用',v:2.8,max:5},{n:'反思改进落实',v:2.7,max:5}]},
-    m7:{score:7.5,data:[2.5,1.5,1.8,1.7]},
-    m8:{score:9.2,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.5,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.7,max:4}]},
-    total:71.9,
-    insights:[
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'直播实操超强，M5达 <strong style="color:var(--green)">93.3%</strong>，镜头感满分，天赋突出。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'课前习惯薄弱，M1仅 <strong style="color:var(--rose)">62%</strong>，需加强预习自律。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'理论知识 M3 仅 <strong style="color:var(--rose)">70%</strong>，建议补充系统理论学习。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力有提升但仍偏低，需强化数据分析思维。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'补足 M1/M3/M6，实操优势将带动评分至 <strong style="color:var(--cyan)">85分+</strong>。'},
-    ]
-  },
-  {
-    name:'刘晓雯', avatar:'刘',
-    m1:{score:8.5,subs:[{n:'预习完成率',v:4.2,max:5},{n:'任务准时率',v:2.8,max:3},{n:'话术初稿完整',v:1.5,max:2}]},
-    m2:{score:9.5,data:[4.0,2.8,2.7,9.5]},
-    m3:{score:13.2,data:[90,88,87,85]},
-    m4:{score:14.0,data:[7.5,6.5],subs:[{n:'取信话术',v:7.5,max:8},{n:'促单话术',v:6.5,max:7}]},
-    m5:{score:13.8,subs:[{n:'镜头感',v:3.8,max:4},{n:'场控稳定性',v:3.8,max:4},{n:'突发应对',v:3.5,max:4},{n:'流程完整性',v:2.7,max:3}]},
-    m6:{score:8.0,trend:[5.5,6.5,7.2,8.0],subs:[{n:'数据反馈使用',v:4.0,max:5},{n:'反思改进落实',v:4.0,max:5}]},
-    m7:{score:13.0,data:[4.5,2.8,2.8,2.9]},
-    m8:{score:9.8,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:5.9,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.9,max:4}]},
-    total:89.8,
-    insights:[
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'综合能力最强，总分 <strong style="color:var(--cyan)">89.8分</strong>，名列班级第一。'},
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'M4 直播设计能力 93.3%，话术设计专业度极高。'},
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'M7 AI创新应用 86.7%，DeepSeek 应用最为熟练。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力从 5.5→8.0 持续提升，学习闭环完整。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'课前准备可进一步提升，冲击 <strong style="color:var(--cyan)">92分</strong> 目标可期。'},
-    ]
-  },
-  {
-    name:'赵明宇', avatar:'赵',
-    m1:{score:7.0,subs:[{n:'预习完成率',v:3.5,max:5},{n:'任务准时率',v:2.2,max:3},{n:'话术初稿完整',v:1.3,max:2}]},
-    m2:{score:6.8,data:[3.0,1.8,2.0,6.8]},
-    m3:{score:12.0,data:[82,80,80,78]},
-    m4:{score:9.5,data:[5.2,4.3],subs:[{n:'取信话术',v:5.2,max:8},{n:'促单话术',v:4.3,max:7}]},
-    m5:{score:11.0,subs:[{n:'镜头感',v:3.0,max:4},{n:'场控稳定性',v:2.8,max:4},{n:'突发应对',v:2.8,max:4},{n:'流程完整性',v:2.4,max:3}]},
-    m6:{score:6.0,trend:[3.0,4.0,5.0,6.0],subs:[{n:'数据反馈使用',v:3.0,max:5},{n:'反思改进落实',v:3.0,max:5}]},
-    m7:{score:8.5,data:[3.0,2.0,2.0,1.5]},
-    m8:{score:7.5,subs:[{n:'完整直播表现（脚本+演练+复盘）',v:4.5,max:6},{n:'数据转化指标（观看/互动/下单）',v:3.0,max:4}]},
-    total:68.3,
-    insights:[
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'整体评分偏低 <strong style="color:var(--rose)">68.3分</strong>，建议制定专项提升计划。'},
-      {ico:'🏆',tag:'tg-g',label:'优势',text:'理论知识 M3 相对较好，基础知识框架基本建立。'},
-      {ico:'⚠️',tag:'tg-w',label:'待提升',text:'M4 直播设计能力 63.3%，话术设计需大量练习。'},
-      {ico:'📈',tag:'tg-i',label:'趋势',text:'复盘能力从 3.0→6.0 翻倍增长，学习潜力可期。'},
-      {ico:'🔮',tag:'tg-p',label:'建议',text:'全面补强 M2/M4/M5，重点加强课堂互动参与度。'},
-    ]
-  },
-];
-
-const GROUPS = [
-  {name:'第一组', members:[0,1]},
-  {name:'第二组', members:[2,3]},
-  {name:'第三组', members:[4,5]},
+const SCORE_FLOOR = 82;
+const GROUP_NAMES = ['出海组','酒仙组','财神组','淘气组'];
+const GROUP_STORAGE_KEY = 'xuesheng-random-groups-v1';
+const STUDENT_NAMES = [
+  '徐娅楠','谢荣轩','高炜佳','钟雪鑫','吴潇妤','江超群',
+  '杨羽婷','付萧冉','刘瑞雪','崔传钰','李京阅','刘羽菲',
+  '张隽嘉','李德嘉','孟子群','李恒运','宋颖涵','田桓旭',
+  '陈一菡','潘奕竹','丛芳萱','王宇成','刘昊轩','张津铨',
 ];
 
 const MODULE_META = [
@@ -635,6 +533,139 @@ function getGrade(s){
 }
 function round1(n){return Math.round(n*10)/10;}
 function avg(nums){return nums.reduce((a,b)=>a+b,0)/nums.length;}
+function sum(nums){return nums.reduce((a,b)=>a+b,0);}
+function clamp(n,min,max){return Math.min(max,Math.max(min,n));}
+function hashString(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=Math.imul(h,16777619);
+  }
+  return h>>>0;
+}
+function mulberry32(seed){
+  return function(){
+    let t=seed+=0x6D2B79F5;
+    t=Math.imul(t^t>>>15,t|1);
+    t^=t+Math.imul(t^t>>>7,t|61);
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function shuffleArray(items){
+  const shuffled=[...items];
+  for(let i=shuffled.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+  }
+  return shuffled;
+}
+function getStorage(){
+  try{
+    if(typeof window!=='undefined'&&window.localStorage)return window.localStorage;
+  }catch(_err){}
+  return null;
+}
+function isValidStoredGroups(groups){
+  if(!Array.isArray(groups)||groups.length!==GROUP_NAMES.length)return false;
+  const flattened=groups.flatMap(group=>group&&Array.isArray(group.members)?group.members:[]);
+  if(flattened.length!==STUDENTS.length)return false;
+  const unique=new Set(flattened);
+  if(unique.size!==STUDENTS.length)return false;
+  return groups.every((group,index)=>
+    group
+    && group.name===GROUP_NAMES[index]
+    && Array.isArray(group.members)
+    && group.members.length===6
+    && group.members.every(member=>Number.isInteger(member)&&member>=0&&member<STUDENTS.length)
+  );
+}
+function loadStoredGroups(){
+  const storage=getStorage();
+  if(!storage)return null;
+  try{
+    const raw=storage.getItem(GROUP_STORAGE_KEY);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw);
+    return isValidStoredGroups(parsed)?parsed:null;
+  }catch(_err){
+    return null;
+  }
+}
+function saveStoredGroups(groups){
+  const storage=getStorage();
+  if(!storage)return;
+  try{
+    storage.setItem(GROUP_STORAGE_KEY,JSON.stringify(groups));
+  }catch(_err){}
+}
+function splitUnits(totalUnits,caps,seed){
+  const rand=mulberry32(seed);
+  const weights=caps.map((cap,idx)=>cap*(0.85+rand()*0.45+(idx%2===0?0.06:0)));
+  const totalWeight=sum(weights);
+  const units=weights.map((weight,idx)=>Math.min(Math.floor(totalUnits*weight/totalWeight),caps[idx]));
+  let used=sum(units);
+  let cursor=Math.floor(rand()*caps.length);
+  while(used<totalUnits){
+    let placed=false;
+    for(let step=0;step<caps.length;step++){
+      const idx=(cursor+step)%caps.length;
+      if(units[idx]<caps[idx]){
+        units[idx]+=1;
+        used+=1;
+        cursor=idx+1;
+        placed=true;
+        break;
+      }
+    }
+    if(!placed)break;
+  }
+  return units;
+}
+function adjustUnitsToRange(units,minTotal,maxTotal,seed){
+  const maxUnits=MODULE_META.map(meta=>Math.round(meta.max*10*0.98));
+  const minUnits=MODULE_META.map(meta=>Math.round(meta.max*10*0.72));
+  let total=sum(units);
+  let cursor=seed%units.length;
+  while(total<minTotal){
+    let changed=false;
+    for(let step=0;step<units.length;step++){
+      const idx=(cursor+step)%units.length;
+      if(units[idx]<maxUnits[idx]){
+        units[idx]+=1;
+        total+=1;
+        cursor=idx+1;
+        changed=true;
+        break;
+      }
+    }
+    if(!changed)break;
+  }
+  while(total>maxTotal){
+    let changed=false;
+    for(let step=0;step<units.length;step++){
+      const idx=(cursor+step)%units.length;
+      if(units[idx]>minUnits[idx]){
+        units[idx]-=1;
+        total-=1;
+        cursor=idx+1;
+        changed=true;
+        break;
+      }
+    }
+    if(!changed)break;
+  }
+  return units;
+}
+function buildModuleUnits(seed){
+  const rand=mulberry32(seed);
+  const quality=0.42+rand()*0.42;
+  const units=MODULE_META.map((meta,idx)=>{
+    const noise=(rand()-.5)*0.16;
+    const pct=clamp(0.78+quality*0.15+noise+(idx===2||idx===4?0.02:0),0.74,0.97);
+    return Math.round(meta.max*10*pct);
+  });
+  return adjustUnitsToRange(units,SCORE_FLOOR*10,948,seed);
+}
 function subBar(subs,color){
   return subs.map(b=>`<div class="sub-row">
     <div class="sub-name">${b.n}</div>
@@ -659,7 +690,79 @@ function moduleScoreMap(entity){
     pct:entity[meta.key].score/meta.max*100,
   }));
 }
-function aggregateEntity(name, avatar, members, type, groupName=''){
+function buildRadarData(score,max,seed){
+  const rand=mulberry32(seed);
+  const center=score/max*100;
+  return Array.from({length:4},(_,idx)=>round1(clamp(center-5+rand()*10+(idx===0?1.2:0)-(idx===3?1.2:0),72,99)));
+}
+function buildTrend(score,seed){
+  const rand=mulberry32(seed);
+  const start=round1(clamp(score-(1.6+rand()*2.4),3.5,score-0.9));
+  const second=round1(clamp(start+(score-start)*(0.34+rand()*0.14),start+0.4,score-0.6));
+  const third=round1(clamp(start+(score-start)*(0.68+rand()*0.12),second+0.4,score-0.2));
+  return [start,second,third,score].map(round1);
+}
+function buildStudentInsights(student){
+  const modules=moduleScoreMap(student).sort((a,b)=>b.pct-a.pct);
+  const weakest=modules[modules.length-1];
+  const secondWeakest=modules[modules.length-2];
+  const growth=round1(student.m6.trend[student.m6.trend.length-1]-student.m6.trend[0]);
+  return [
+    {ico:'🏆',tag:'tg-g',label:'概览',text:`${student.name} 当前综合得分 <strong style="color:var(--cyan)">${student.total}分</strong>，达到 ${getGrade(student.total).text.split(' · ')[0]} 水平。`},
+    {ico:'📚',tag:'tg-i',label:'强项',text:`优势模块为 <strong style="color:${modules[0].color}">${modules[0].label} · ${modules[0].title}</strong>，完成度 ${round1(modules[0].pct)}%。`},
+    {ico:'⚠️',tag:'tg-w',label:'关注',text:`当前最需要补强的是 <strong style="color:${weakest.color}">${weakest.label}</strong>，继续提升会更容易拉开总分。`},
+    {ico:'📈',tag:'tg-i',label:'趋势',text:`复盘优化从 ${student.m6.trend[0]} 提升到 ${student.m6.trend[3]}，累计提升 <strong style="color:var(--teal)">${growth} 分</strong>。`},
+    {ico:'🔮',tag:'tg-p',label:'建议',text:`优先强化 ${weakest.label} 与 ${secondWeakest.label}，总分有望冲击 <strong style="color:var(--cyan)">${round1(Math.min(97,student.total+3.5))}分</strong>。`},
+  ];
+}
+function buildStudent(name,index){
+  const seed=hashString(`${name}-${index+1}`);
+  const moduleUnits=buildModuleUnits(seed);
+  const scores=Object.fromEntries(MODULE_META.map((meta,metaIndex)=>[meta.key,moduleUnits[metaIndex]/10]));
+
+  const m1Parts=splitUnits(moduleUnits[0],[50,30,20],seed+11).map(v=>v/10);
+  const m2Parts=splitUnits(moduleUnits[1],[40,30,30],seed+21).map(v=>v/10);
+  const m4Parts=splitUnits(moduleUnits[3],[80,70],seed+31).map(v=>v/10);
+  const m5Parts=splitUnits(moduleUnits[4],[40,40,40,30],seed+41).map(v=>v/10);
+  const m6Parts=splitUnits(moduleUnits[5],[50,50],seed+51).map(v=>v/10);
+  const m7Parts=splitUnits(moduleUnits[6],[50,30,30,40],seed+61).map(v=>v/10);
+  const m8Parts=splitUnits(moduleUnits[7],[60,40],seed+71).map(v=>v/10);
+
+  const student={
+    name,
+    avatar:name[0],
+    m1:{score:scores.m1,subs:[
+      {n:'预习完成率',v:m1Parts[0],max:5},
+      {n:'任务准时率',v:m1Parts[1],max:3},
+      {n:'话术初稿完整',v:m1Parts[2],max:2},
+    ]},
+    m2:{score:scores.m2,data:[m2Parts[0],m2Parts[1],m2Parts[2],scores.m2]},
+    m3:{score:scores.m3,data:buildRadarData(scores.m3,15,seed+81)},
+    m4:{score:scores.m4,data:[m4Parts[0],m4Parts[1]],subs:[
+      {n:'取信话术',v:m4Parts[0],max:8},
+      {n:'促单话术',v:m4Parts[1],max:7},
+    ]},
+    m5:{score:scores.m5,subs:[
+      {n:'镜头感',v:m5Parts[0],max:4},
+      {n:'场控稳定性',v:m5Parts[1],max:4},
+      {n:'突发应对',v:m5Parts[2],max:4},
+      {n:'流程完整性',v:m5Parts[3],max:3},
+    ]},
+    m6:{score:scores.m6,trend:buildTrend(scores.m6,seed+91),subs:[
+      {n:'数据反馈使用',v:m6Parts[0],max:5},
+      {n:'反思改进落实',v:m6Parts[1],max:5},
+    ]},
+    m7:{score:scores.m7,data:[m7Parts[0],m7Parts[1],m7Parts[2],m7Parts[3]]},
+    m8:{score:scores.m8,subs:[
+      {n:'完整直播表现（脚本+演练+复盘）',v:m8Parts[0],max:6},
+      {n:'数据转化指标（观看/互动/下单）',v:m8Parts[1],max:4},
+    ]},
+  };
+  student.total=round1(sum(MODULE_META.map(meta=>student[meta.key].score)));
+  student.insights=buildStudentInsights(student);
+  return student;
+}
+function aggregateEntity(name,avatar,members,type,groupName=''){
   const entity={
     type,
     name,
@@ -675,8 +778,8 @@ function aggregateEntity(name, avatar, members, type, groupName=''){
     m6:{score:round1(avg(members.map(m=>m.m6.score))),trend:avgData(members,'m6','trend'),subs:avgSubs(members,'m6')},
     m7:{score:round1(avg(members.map(m=>m.m7.score))),data:avgData(members,'m7','data')},
     m8:{score:round1(avg(members.map(m=>m.m8.score))),subs:avgSubs(members,'m8')},
-    total:round1(avg(members.map(m=>m.total))),
   };
+  entity.total=round1(sum(MODULE_META.map(meta=>entity[meta.key].score)));
   const modules=moduleScoreMap(entity).sort((a,b)=>b.pct-a.pct);
   const topStudent=[...members].sort((a,b)=>b.total-a.total)[0];
   const lowStudent=[...members].sort((a,b)=>a.total-b.total)[0];
@@ -685,7 +788,7 @@ function aggregateEntity(name, avatar, members, type, groupName=''){
     lowStudent,
     topModule:modules[0],
     weakModule:modules[modules.length-1],
-    above80:members.filter(m=>m.total>=80).length,
+    aboveFloor:members.filter(m=>m.total>=SCORE_FLOOR).length,
     above90:members.filter(m=>m.total>=90).length,
     groupName:groupName||name,
   };
@@ -693,7 +796,9 @@ function aggregateEntity(name, avatar, members, type, groupName=''){
     {ico:'🏆',tag:'tg-g',label:'概览',text:`${name}当前平均分为 <strong style="color:var(--cyan)">${entity.total}分</strong>，最高为 ${topStudent.name} ${topStudent.total} 分。`},
     {ico:'📚',tag:'tg-i',label:'强项',text:`整体最强模块为 <strong style="color:${modules[0].color}">${modules[0].label} · ${modules[0].title}</strong>，平均达 ${round1(modules[0].pct)}%。`},
     {ico:'⚠️',tag:'tg-w',label:'短板',text:`当前短板模块是 <strong style="color:${modules[modules.length-1].color}">${modules[modules.length-1].label}</strong>，建议优先补强。`},
-    {ico:'👥',tag:'tg-p',label:'成员',text:`${type==='class'?'班级包含':'小组包含'} ${members.map(m=>m.name).join('、')}，良好及以上 ${entity.metrics.above80}/${members.length} 人。`},
+    {ico:'👥',tag:'tg-p',label:'成员',text:type==='class'
+      ? `班级共 ${members.length} 人，其中 ${SCORE_FLOOR}+ 为 ${entity.metrics.aboveFloor} 人，90+ 为 ${entity.metrics.above90} 人。`
+      : `${groupName}成员：${members.map(m=>m.name).join('、')}，${SCORE_FLOOR}+ ${entity.metrics.aboveFloor}/${members.length} 人。`},
     {ico:'🔮',tag:'tg-p',label:'建议',text:`若优先提升 ${modules[modules.length-1].label} 与 ${modules[modules.length-2].label}，${type==='class'?'班级':'小组'}整体表现还有明显上升空间。`},
   ];
   return entity;
@@ -705,30 +810,80 @@ function getEntityMeta(entity,view){
   if(view.type==='class'){
     return {
       title:'班级总评 · 模块均分视角',
-      desc:`覆盖 ${entity.studentCount} 名学生，当前显示班级整体模块均分与班级洞察。`,
+      desc:`覆盖 ${entity.studentCount} 名学生，支持 4 组随机分组与成员下钻查看。`,
       chip:`班级均分 ${entity.total} / 100`,
     };
   }
   if(view.type==='group'){
     return {
       title:`${entity.name} · 小组总评`,
-      desc:`当前显示 ${entity.memberNames.join('、')} 的小组均分与组内洞察。`,
+      desc:`当前显示 ${entity.name} 的 6 名成员模块均分与组内洞察，点击成员可进入个人画像。`,
       chip:`组均分 ${entity.total} / 100`,
     };
   }
   return {
     title:`${entity.name} · 个人明细`,
-    desc:'当前已切换到单个学生画像，模块数据恢复为个人详细成绩。',
+    desc:`当前聚焦 ${entity.name}，所在分组为 ${GROUPS[CURRENT_GROUP_INDEX].name}，下方保留同组成员便于切换。`,
     chip:`个人总分 ${entity.total} / 100`,
   };
 }
+function getStudentGroupIndex(studentIndex){
+  return STUDENT_GROUP_INDEXES[studentIndex]??0;
+}
+function getVisibleStudentIndexes(){
+  if(CURRENT_VIEW.type==='group')return GROUPS[CURRENT_VIEW.index].members;
+  if(CURRENT_VIEW.type==='student')return GROUPS[CURRENT_GROUP_INDEX].members;
+  return STUDENTS.map((_,index)=>index);
+}
+function getEntrySubText(){
+  if(CURRENT_VIEW.type==='group'){
+    return `当前展示 ${GROUPS[CURRENT_VIEW.index].name} 的 6 名成员，点击头像可进入个人明细。`;
+  }
+  if(CURRENT_VIEW.type==='student'){
+    return `当前展示 ${GROUPS[CURRENT_GROUP_INDEX].name} 成员，便于在组内快速切换对比。`;
+  }
+  return '当前展示全部 24 名学生，点击任一学生可进入个人明细。';
+}
 function animBars(){
-  // Trigger bar fill animation after paint
   requestAnimationFrame(()=>{
     document.querySelectorAll('.sub-fill[data-pct]').forEach(el=>{
       el.style.width=el.dataset.pct+'%';
     });
   });
+}
+
+const STUDENTS=STUDENT_NAMES.map((name,index)=>buildStudent(name,index));
+let GROUPS=[];
+let GROUP_ENTITIES=[];
+let STUDENT_GROUP_INDEXES=Array(STUDENTS.length).fill(0);
+let CLASS_ENTITY=null;
+
+function rebuildEntities(forceShuffle=false){
+  CLASS_ENTITY=aggregateEntity('班级总评','班',STUDENTS,'class');
+  const storedGroups=!forceShuffle&&loadStoredGroups();
+  if(storedGroups){
+    GROUPS=storedGroups;
+  }else{
+    const shuffledIndexes=shuffleArray(STUDENTS.map((_,index)=>index));
+    GROUPS=GROUP_NAMES.map((name,groupIndex)=>({
+      name,
+      members:shuffledIndexes.slice(groupIndex*6,(groupIndex+1)*6),
+    }));
+    saveStoredGroups(GROUPS);
+  }
+  STUDENT_GROUP_INDEXES=Array(STUDENTS.length).fill(0);
+  GROUPS.forEach((group,groupIndex)=>{
+    group.members.forEach(studentIndex=>{
+      STUDENT_GROUP_INDEXES[studentIndex]=groupIndex;
+    });
+  });
+  GROUP_ENTITIES=GROUPS.map((group,groupIndex)=>aggregateEntity(
+    group.name,
+    `G${groupIndex+1}`,
+    group.members.map(studentIndex=>STUDENTS[studentIndex]),
+    'group',
+    group.name
+  ));
 }
 
 // ═══ CHART INSTANCES ═══
@@ -738,9 +893,8 @@ Chart.defaults.font.family="'PingFang SC','Microsoft YaHei',system-ui,sans-serif
 Chart.defaults.font.size=11;
 let CH={};
 let _gaugeScore=12.5;
+let CURRENT_GROUP_INDEX=0;
 let CURRENT_VIEW={type:'class'};
-const CLASS_ENTITY=aggregateEntity('班级总评','班',STUDENTS,'class');
-const GROUP_ENTITIES=GROUPS.map((group,i)=>aggregateEntity(group.name,`G${i+1}`,group.members.map(idx=>STUDENTS[idx]),'group',group.name));
 
 function initCharts(s){
   Object.values(CH).forEach(c=>c&&c.destroy());CH={};
@@ -807,27 +961,61 @@ function initCharts(s){
 function drawGauge(score){
   const cv=document.getElementById('chartM5');
   const W=cv.offsetWidth,H=cv.offsetHeight;
-  cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;
-  const ctx=cv.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+  cv.width=W*devicePixelRatio;
+  cv.height=H*devicePixelRatio;
+  const ctx=cv.getContext('2d');
+  ctx.scale(devicePixelRatio,devicePixelRatio);
   const cx=W/2,cy=H*.62,R=Math.min(W,H)*.38;
   const pct=score/15,sa=Math.PI*.75,ea=Math.PI*2.25,range=ea-sa,fe=sa+range*pct;
   for(let i=0;i<=10;i++){
     const a=sa+range*i/10,m=i%5===0;
-    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(R+(m?5:2)),cy+Math.sin(a)*(R+(m?5:2)));
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*(R+(m?5:2)),cy+Math.sin(a)*(R+(m?5:2)));
     ctx.lineTo(cx+Math.cos(a)*(R+(m?12:6)),cy+Math.sin(a)*(R+(m?12:6)));
-    ctx.strokeStyle=m?'rgba(255,255,255,.28)':'rgba(255,255,255,.1)';ctx.lineWidth=m?1.5:.8;ctx.stroke();
+    ctx.strokeStyle=m?'rgba(255,255,255,.28)':'rgba(255,255,255,.1)';
+    ctx.lineWidth=m?1.5:.8;
+    ctx.stroke();
   }
-  ctx.beginPath();ctx.arc(cx,cy,R,sa,ea);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=11;ctx.lineCap='round';ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,R,sa,fe);ctx.strokeStyle='rgba(16,185,129,.25)';ctx.lineWidth=18;ctx.lineCap='round';ctx.stroke();
-  const g=ctx.createLinearGradient(cx-R,cy,cx+R,cy);g.addColorStop(0,'#10b981');g.addColorStop(1,'#34d399');
-  ctx.beginPath();ctx.arc(cx,cy,R,sa,fe);ctx.strokeStyle=g;ctx.lineWidth=11;ctx.lineCap='round';ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(fe)*(R-8),cy+Math.sin(fe)*(R-8));
-  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#f59e0b';ctx.fill();
-  ctx.fillStyle='#cde8ff';ctx.font=`bold ${Math.round(H*.14)}px Orbitron,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(score.toFixed(1),cx,cy+R*.12);
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,sa,ea);
+  ctx.strokeStyle='rgba(255,255,255,.07)';
+  ctx.lineWidth=11;
+  ctx.lineCap='round';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,sa,fe);
+  ctx.strokeStyle='rgba(16,185,129,.25)';
+  ctx.lineWidth=18;
+  ctx.lineCap='round';
+  ctx.stroke();
+  const g=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
+  g.addColorStop(0,'#10b981');
+  g.addColorStop(1,'#34d399');
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,sa,fe);
+  ctx.strokeStyle=g;
+  ctx.lineWidth=11;
+  ctx.lineCap='round';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(fe)*(R-8),cy+Math.sin(fe)*(R-8));
+  ctx.strokeStyle='#f59e0b';
+  ctx.lineWidth=2;
+  ctx.lineCap='round';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx,cy,5,0,Math.PI*2);
+  ctx.fillStyle='#f59e0b';
+  ctx.fill();
+  ctx.fillStyle='#cde8ff';
+  ctx.font=`bold ${Math.round(H*.14)}px Orbitron,sans-serif`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(score.toFixed(1),cx,cy+R*.12);
   ctx.font=`${Math.round(H*.065)}px PingFang SC,sans-serif`;
-  ctx.fillStyle='rgba(180,220,255,0.42)';ctx.fillText('/ 15',cx,cy+R*.3);
+  ctx.fillStyle='rgba(180,220,255,0.42)';
+  ctx.fillText('/ 15',cx,cy+R*.3);
 }
 
 let _rafTotal=null;
@@ -835,7 +1023,8 @@ function animTotal(target){
   const ring=document.getElementById('totalRing');
   const numEl=document.getElementById('totalNum');
   const C=2*Math.PI*45;
-  ring.style.strokeDasharray=C;ring.style.strokeDashoffset=C;
+  ring.style.strokeDasharray=C;
+  ring.style.strokeDashoffset=C;
   if(_rafTotal)cancelAnimationFrame(_rafTotal);
   setTimeout(()=>{ring.style.strokeDashoffset=C*(1-target/100);},100);
   const dur=1200,t0=performance.now();
@@ -867,7 +1056,7 @@ function renderClassSummary(entity,isActive){
     <div class="sum-stats">
       <div class="sum-stat"><div class="sum-stat-label">最高分</div><div class="sum-stat-value">${entity.metrics.topStudent.total}</div></div>
       <div class="sum-stat"><div class="sum-stat-label">最低分</div><div class="sum-stat-value">${entity.metrics.lowStudent.total}</div></div>
-      <div class="sum-stat"><div class="sum-stat-label">80+人数</div><div class="sum-stat-value">${entity.metrics.above80}/${entity.studentCount}</div></div>
+      <div class="sum-stat"><div class="sum-stat-label">${SCORE_FLOOR}+人数</div><div class="sum-stat-value">${entity.metrics.aboveFloor}/${entity.studentCount}</div></div>
       <div class="sum-stat"><div class="sum-stat-label">90+人数</div><div class="sum-stat-value">${entity.metrics.above90}/${entity.studentCount}</div></div>
     </div>
     <div class="sum-foot">
@@ -879,12 +1068,14 @@ function renderGroups(){
   const groups=[...GROUP_ENTITIES].sort((a,b)=>b.total-a.total);
   document.getElementById('groupSummaryList').innerHTML=groups.map((group,rank)=>{
     const realIndex=GROUP_ENTITIES.findIndex(item=>item.name===group.name);
-    return `<div class="group-card${CURRENT_VIEW.type==='group'&&CURRENT_VIEW.index===realIndex?' active':''}" data-group-index="${realIndex}">
+    const isActive=(CURRENT_VIEW.type==='group'&&CURRENT_VIEW.index===realIndex)
+      || (CURRENT_VIEW.type==='student'&&CURRENT_GROUP_INDEX===realIndex);
+    return `<div class="group-card${isActive?' active':''}" data-group-index="${realIndex}">
       <div class="group-rank">TOP ${rank+1}</div>
       <div class="group-name">${group.name}</div>
       <div class="group-score">${group.total}</div>
-      <div class="group-meta">${group.memberNames.join('、')}<br>组内最佳：${group.metrics.topStudent.name}</div>
-      <div class="group-strong">强项 ${group.metrics.topModule.label} · ${group.metrics.topModule.title}</div>
+      <div class="group-meta">成员：${group.memberNames.slice(0,3).join('、')} 等 ${group.memberCount} 人<br>组内最佳：${group.metrics.topStudent.name}</div>
+      <div class="group-strong">${SCORE_FLOOR}+ ${group.metrics.aboveFloor}/${group.memberCount} · 强项 ${group.metrics.topModule.label}</div>
     </div>`;
   }).join('');
   document.querySelectorAll('.group-card').forEach(card=>{
@@ -893,18 +1084,31 @@ function renderGroups(){
 }
 function renderStudents(){
   const picker=document.getElementById('stuPicker');
+  const visibleIndexes=getVisibleStudentIndexes();
   picker.innerHTML='';
-  STUDENTS.forEach((s,i)=>{
+  visibleIndexes.forEach(studentIndex=>{
+    const student=STUDENTS[studentIndex];
     const btn=document.createElement('div');
-    btn.className='stu-btn'+(CURRENT_VIEW.type==='student'&&CURRENT_VIEW.index===i?' active':'');
-    btn.innerHTML=`<div class="stu-avatar">${s.avatar}</div>
-      <div class="stu-name-sm">${s.name}</div>
-      <div class="stu-score-sm">${s.total}</div>`;
-    btn.addEventListener('click',()=>renderView({type:'student',index:i}));
+    btn.className='stu-btn'+(CURRENT_VIEW.type==='student'&&CURRENT_VIEW.index===studentIndex?' active':'');
+    btn.innerHTML=`<div class="stu-avatar">${student.avatar}</div>
+      <div class="stu-name-sm">${student.name}</div>
+      <div class="stu-score-sm">${student.total}</div>`;
+    btn.addEventListener('click',()=>renderView({
+      type:'student',
+      index:studentIndex,
+      groupIndex:getStudentGroupIndex(studentIndex),
+    }));
     picker.appendChild(btn);
   });
+  document.getElementById('entrySub').textContent=getEntrySubText();
 }
 function renderView(view){
+  if(view.type==='group'){
+    CURRENT_GROUP_INDEX=view.index;
+  }else if(view.type==='student'){
+    CURRENT_GROUP_INDEX=typeof view.groupIndex==='number'?view.groupIndex:getStudentGroupIndex(view.index);
+    view={...view,groupIndex:CURRENT_GROUP_INDEX};
+  }
   CURRENT_VIEW=view;
   const s=getCurrentEntity(view);
   const meta=getEntityMeta(s,view);
@@ -959,6 +1163,22 @@ function renderView(view){
   setTimeout(()=>drawGauge(s.m5.score),50);
   animTotal(s.total);
 }
+function reshuffleGroups(){
+  rebuildEntities(true);
+  if(CURRENT_VIEW.type==='group'){
+    renderView({type:'group',index:CURRENT_VIEW.index});
+    return;
+  }
+  if(CURRENT_VIEW.type==='student'){
+    renderView({
+      type:'student',
+      index:CURRENT_VIEW.index,
+      groupIndex:getStudentGroupIndex(CURRENT_VIEW.index),
+    });
+    return;
+  }
+  renderView({type:'class'});
+}
 
 // ═══ NEURAL BG ═══
 (function(){
@@ -998,12 +1218,15 @@ document.getElementById('aiMascotWrap').addEventListener('click',()=>{
   document.getElementById('aiPanel').classList.toggle('open');
 });
 document.getElementById('aiClose').addEventListener('click',e=>{
-  e.stopPropagation();document.getElementById('aiPanel').classList.remove('open');
+  e.stopPropagation();
+  document.getElementById('aiPanel').classList.remove('open');
 });
 document.getElementById('classSummaryCard').addEventListener('click',()=>renderView({type:'class'}));
+document.getElementById('reshuffleBtn').addEventListener('click',reshuffleGroups);
 window.addEventListener('resize',()=>drawGauge(_gaugeScore));
 
 // ═══ INIT ═══
+rebuildEntities();
 renderView({type:'class'});
 </script>
 </body>
