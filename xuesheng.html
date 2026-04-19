@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生信息监控大屏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:       #06111f;
+  --s1:       #0b1a2e;
+  --s2:       #0f2040;
+  --amber:    #f59e0b;
+  --amber2:   #fbbf24;
+  --cyan:     #22d3ee;
+  --rose:     #fb7185;
+  --green:    #4ade80;
+  --violet:   #a78bfa;
+  --text:     #dce9ff;
+  --dim:      rgba(220,233,255,0.42);
+  --border:   rgba(255,255,255,0.06);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
+  font-size: 14px;
+  overflow-x: hidden;
+}
+
+/* ── Atmosphere ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 10%, rgba(245,158,11,.055) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(34,211,238,.055) 0%, transparent 55%);
+  pointer-events:none; z-index:0;
+}
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(circle, rgba(245,158,11,.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── Layout ── */
+.screen {
+  position:relative; z-index:1;
+  min-height:100vh;
+  display:grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap:0;
+  padding: 0 16px 16px;
+}
+
+/* ── Header ── */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 4px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.header-left {
+  display:flex; align-items:center; gap:14px;
+}
+
+.header-logo {
+  width:38px; height:38px;
+  border-radius:8px;
+  background: linear-gradient(135deg, rgba(245,158,11,.3), rgba(34,211,238,.2));
+  border: 1px solid rgba(245,158,11,.4);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem;
+}
+
+.header-title-main {
+  font-family:'Rajdhani',sans-serif;
+  font-size:1.3rem; font-weight:700;
+  letter-spacing:.08em;
+  color: var(--amber);
+  text-shadow: 0 0 20px rgba(245,158,11,.4);
+  text-transform:uppercase;
+}
+
+.header-title-sub {
+  font-size:.72rem;
+  color: var(--dim);
+  letter-spacing:.1em;
+  margin-top:2px;
+}
+
+.header-center {
+  display:flex; align-items:center; gap:24px;
+}
+
+.class-filter {
+  display:flex; gap:8px;
+}
+
+.filter-btn {
+  padding: 6px 16px;
+  border-radius:6px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: transparent;
+  color: var(--dim);
+  font-family:inherit; font-size:.78rem;
+  cursor:pointer;
+  transition: all .18s;
+}
+.filter-btn.active, .filter-btn:hover {
+  border-color: rgba(245,158,11,.5);
+  color: var(--amber);
+  background: rgba(245,158,11,.07);
+}
+
+.header-right {
+  text-align:right;
+}
+
+.clock-time {
+  font-family:'Rajdhani',sans-serif;
+  font-size:1.6rem; font-weight:700;
+  color: var(--amber2);
+  text-shadow: 0 0 16px rgba(251,191,36,.35);
+  letter-spacing:.05em;
+  line-height:1;
+}
+
+.clock-date {
+  font-size:.72rem;
+  color: var(--dim);
+  letter-spacing:.1em;
+  margin-top:3px;
+}
+
+/* ── KPI Row ── */
+.kpi-row {
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.kpi-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-top: 2px solid;
+  border-radius:12px;
+  padding: 16px 20px;
+  display:flex; align-items:center; gap:16px;
+  position:relative; overflow:hidden;
+  cursor:default;
+  transition: box-shadow .2s;
+}
+.kpi-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+
+.kpi-card::before {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(255,255,255,.025) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+.kpi-card.amber { border-top-color: var(--amber); }
+.kpi-card.cyan  { border-top-color: var(--cyan); }
+.kpi-card.green { border-top-color: var(--green); }
+.kpi-card.rose  { border-top-color: var(--rose); }
+
+.kpi-icon {
+  width:44px; height:44px;
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; flex-shrink:0;
+}
+.amber .kpi-icon { background:rgba(245,158,11,.12); }
+.cyan  .kpi-icon { background:rgba(34,211,238,.1); }
+.green .kpi-icon { background:rgba(74,222,128,.1); }
+.rose  .kpi-icon { background:rgba(251,113,133,.1); }
+
+.kpi-body {}
+.kpi-label {
+  font-size:.65rem;
+  color: var(--dim);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.kpi-value {
+  font-family:'Rajdhani',sans-serif;
+  font-size:2rem; font-weight:700;
+  line-height:1;
+}
+.amber .kpi-value { color:var(--amber); text-shadow:0 0 18px rgba(245,158,11,.4); }
+.cyan  .kpi-value { color:var(--cyan);  text-shadow:0 0 18px rgba(34,211,238,.4); }
+.green .kpi-value { color:var(--green); text-shadow:0 0 18px rgba(74,222,128,.4); }
+.rose  .kpi-value { color:var(--rose);  text-shadow:0 0 18px rgba(251,113,133,.4); }
+
+.kpi-badge {
+  font-size:.65rem;
+  color:var(--dim);
+  margin-top:3px;
+}
+.kpi-badge.up   { color:#4ade80; }
+.kpi-badge.down { color:#fb7185; }
+
+/* ── Main Grid ── */
+.main-grid {
+  display:grid;
+  grid-template-columns: 1.8fr 1.4fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap:12px;
+  min-height:0;
+}
+
+/* ── Panel ── */
+.panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+
+.panel.span-col2 { grid-column: span 2; }
+.panel.span-row2 { grid-row: span 2; }
+
+.panel-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px 18px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
+}
+
+.panel-title {
+  font-size:.78rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+
+.panel-dot {
+  width:7px; height:7px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.dot-amber  { background:var(--amber); box-shadow:0 0 6px var(--amber); }
+.dot-cyan   { background:var(--cyan);  box-shadow:0 0 6px var(--cyan); }
+.dot-green  { background:var(--green); box-shadow:0 0 6px var(--green); }
+.dot-rose   { background:var(--rose);  box-shadow:0 0 6px var(--rose); }
+.dot-violet { background:var(--violet);box-shadow:0 0 6px var(--violet); }
+
+.panel-hint {
+  font-size:.62rem;
+  color:var(--dim);
+  letter-spacing:.05em;
+}
+
+.panel-body {
+  flex:1;
+  padding: 12px 16px;
+  min-height:0;
+  position:relative;
+}
+
+.chart-wrap {
+  position:relative;
+  width:100%; height:100%;
+  min-height:0;
+}
+
+/* Clickable overlay hint */
+.panel[data-clickable] .panel-hint::after {
+  content:'· 可点击';
+  color: rgba(245,158,11,.6);
+  margin-left:6px;
+}
+
+/* ── Attention List ── */
+.attn-list {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding: 10px 14px;
+  overflow-y:auto;
+  flex:1;
+}
+
+.attn-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: 10px 14px;
+  border-radius:9px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  cursor:pointer;
+  transition: all .18s;
+}
+.attn-item:hover {
+  border-color: rgba(251,113,133,.35);
+  background: rgba(251,113,133,.05);
+}
+
+.attn-avatar {
+  width:32px; height:32px;
+  border-radius:50%;
+  background: linear-gradient(135deg, rgba(251,113,133,.3), rgba(167,139,250,.2));
+  border: 1px solid rgba(251,113,133,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.8rem; font-weight:700;
+  color:var(--rose);
+  flex-shrink:0;
+}
+
+.attn-info { flex:1; min-width:0; }
+.attn-name { font-weight:700; font-size:.82rem; }
+.attn-desc { font-size:.65rem; color:var(--dim); margin-top:2px; }
+
+.attn-tag {
+  font-size:.6rem;
+  padding: 3px 8px;
+  border-radius:20px;
+  border: 1px solid;
+  white-space:nowrap;
+}
+.tag-drop  { border-color:rgba(251,113,133,.4); color:var(--rose); background:rgba(251,113,133,.08); }
+.tag-absen { border-color:rgba(245,158,11,.4);  color:var(--amber);background:rgba(245,158,11,.08); }
+.tag-low   { border-color:rgba(167,139,250,.4); color:var(--violet);background:rgba(167,139,250,.08); }
+
+/* ── Activity Feed ── */
+.feed-list {
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding: 6px 14px 10px;
+  overflow-y:auto;
+  flex:1;
+}
+
+.feed-item {
+  display:flex;
+  gap:12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items:flex-start;
+  animation: fadeSlide .4s ease both;
+}
+.feed-item:last-child { border-bottom:none; }
+
+@keyframes fadeSlide {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+.feed-dot {
+  width:8px; height:8px;
+  border-radius:50%;
+  margin-top:5px;
+  flex-shrink:0;
+}
+
+.feed-text {
+  font-size:.75rem;
+  line-height:1.45;
+  color: var(--text);
+}
+.feed-text strong { color:var(--amber2); }
+.feed-time {
+  font-size:.62rem;
+  color:var(--dim);
+  margin-top:2px;
+}
+
+/* ── Subject mini stats ── */
+.subject-mini {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding: 8px 16px 12px;
+}
+
+.subject-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.subject-name {
+  width:32px;
+  font-size:.72rem;
+  color:var(--dim);
+  flex-shrink:0;
+  text-align:right;
+}
+.subject-bar-bg {
+  flex:1;
+  height:8px;
+  background:rgba(255,255,255,.06);
+  border-radius:4px;
+  overflow:hidden;
+}
+.subject-bar-fill {
+  height:100%;
+  border-radius:4px;
+  transition: width 1s cubic-bezier(.34,1.56,.64,1);
+}
+.subject-score {
+  font-family:'Rajdhani',sans-serif;
+  font-size:.85rem; font-weight:700;
+  width:32px;
+  text-align:right;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(3,8,18,.88);
+  backdrop-filter:blur(14px);
+  z-index:1000;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+.modal-overlay.open { display:flex; }
+
+.modal-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--amber);
+  border-radius:18px;
+  width:100%;
+  max-width:640px;
+  max-height:85vh;
+  overflow-y:auto;
+  box-shadow:0 40px 80px rgba(0,0,0,.9), 0 0 50px rgba(245,158,11,.07);
+  animation: modalPop .22s cubic-bezier(.2,.9,.4,1.1);
+}
+
+@keyframes modalPop {
+  from { transform:scale(.9) translateY(12px); opacity:0; }
+  to   { transform:scale(1) translateY(0);     opacity:1; }
+}
+
+.modal-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size:1.05rem;
+  font-weight:700;
+  color:var(--text);
+}
+.modal-sub {
+  font-size:.72rem;
+  color:var(--dim);
+  margin-top:3px;
+}
+
+.modal-close {
+  width:32px; height:32px;
+  border-radius:8px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  color:var(--dim);
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem;
+  transition: all .15s;
+}
+.modal-close:hover {
+  color:var(--text);
+  border-color:rgba(251,113,133,.4);
+  background:rgba(251,113,133,.08);
+}
+
+.modal-body { padding: 20px 24px 24px; }
+
+.modal-section-title {
+  font-size:.65rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--dim);
+  margin-bottom:12px;
+  margin-top:20px;
+}
+.modal-section-title:first-child { margin-top:0; }
+
+.student-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+  gap:10px;
+}
+
+.student-card {
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition: all .18s;
+}
+.student-card:hover {
+  border-color:rgba(245,158,11,.35);
+  background:rgba(245,158,11,.04);
+}
+
+.sc-name { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+.sc-cls  { font-size:.65rem; color:var(--dim); }
+.sc-score {
+  font-family:'Rajdhani',sans-serif;
+  font-size:1.4rem; font-weight:700;
+  line-height:1;
+  margin-top:8px;
+}
+
+.profile-header {
+  display:flex; align-items:center; gap:18px;
+  margin-bottom:20px;
+}
+
+.profile-avatar {
+  width:56px; height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg, rgba(245,158,11,.3), rgba(34,211,238,.2));
+  border:2px solid rgba(245,158,11,.4);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; font-weight:700;
+  color:var(--amber);
+  flex-shrink:0;
+}
+
+.profile-info-name { font-size:1.2rem; font-weight:700; }
+.profile-info-meta { font-size:.72rem; color:var(--dim); margin-top:4px; }
+
+.profile-tags {
+  display:flex; gap:6px; flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.tag-small {
+  font-size:.6rem;
+  padding:2px 8px;
+  border-radius:12px;
+  border:1px solid;
+}
+
+.score-trend {
+  display:flex; gap:8px; align-items:flex-end;
+  height:60px;
+  margin-bottom:16px;
+}
+
+.trend-bar-wrap {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+}
+
+.trend-bar {
+  width:100%;
+  border-radius:3px 3px 0 0;
+  transition: height .6s ease;
+  min-height:4px;
+}
+
+.trend-label {
+  font-size:.58rem;
+  color:var(--dim);
+}
+
+.trend-val {
+  font-family:'Rajdhani',sans-serif;
+  font-size:.75rem;
+  font-weight:700;
+}
+
+.stats-row {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:4px;
+}
+
+.stat-mini {
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 12px;
+  text-align:center;
+}
+.stat-mini-label { font-size:.6rem; color:var(--dim); }
+.stat-mini-val {
+  font-family:'Rajdhani',sans-serif;
+  font-size:1.4rem; font-weight:700;
+  line-height:1.2;
+}
+
+/* month-list in modal */
+.month-table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:.8rem;
+}
+.month-table th {
+  text-align:left;
+  padding:8px 12px;
+  font-size:.62rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--dim);
+  border-bottom:1px solid var(--border);
+}
+.month-table td {
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+.month-table tr:last-child td { border-bottom:none; }
+.month-table tr:hover td { background:rgba(255,255,255,.02); }
+
+.rank-badge {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:12px;
+  font-size:.65rem;
+  font-weight:700;
+  font-family:'Rajdhani',sans-serif;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:2px; }
+
+/* ── Footer ── */
+.footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 10px 4px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  font-size:.62rem;
+  color:var(--dim);
+  letter-spacing:.08em;
+}
+
+.footer-indicators {
+  display:flex; gap:16px;
+}
+
+.indicator {
+  display:flex; align-items:center; gap:6px;
+}
+
+.ind-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+}
+
+/* ── Responsive note ── */
+@media (max-width:900px) {
+  .main-grid {
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto;
+  }
+  .panel.span-col2 { grid-column:span 2; }
+  .panel.span-row2 { grid-row:span 1; }
+  .kpi-row { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="screen">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">🎓</div>
+      <div>
+        <div class="header-title-main">Student Monitor</div>
+        <div class="header-title-sub">学生综合信息监控平台 · 高一年级</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="class-filter">
+        <button class="filter-btn active" data-class="全部">全部</button>
+        <button class="filter-btn" data-class="高一(1)班">1班</button>
+        <button class="filter-btn" data-class="高一(2)班">2班</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="clock-time" id="clockTime">--:--:--</div>
+      <div class="clock-date" id="clockDate">----年--月--日</div>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi-card amber">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-body">
+        <div class="kpi-label">在籍学生</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+        <div class="kpi-badge">本学期总人数</div>
+      </div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-body">
+        <div class="kpi-label">本月平均分</div>
+        <div class="kpi-value" id="kpiAvg">0</div>
+        <div class="kpi-badge up" id="kpiAvgBadge">↑ vs 上月</div>
+      </div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-body">
+        <div class="kpi-label">出勤率</div>
+        <div class="kpi-value" id="kpiAttend">0%</div>
+        <div class="kpi-badge" id="kpiAttendBadge">本月统计</div>
+      </div>
+    </div>
+    <div class="kpi-card rose">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-body">
+        <div class="kpi-label">需关注学生</div>
+        <div class="kpi-value" id="kpiAlert">0</div>
+        <div class="kpi-badge">成绩下降 / 出勤异常</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- Monthly Score Bar Chart -->
+    <div class="panel" data-clickable id="panelMonthly">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-dot dot-amber"></div>月度平均成绩趋势
+        </div>
+        <div class="panel-hint">点击柱子查看月度详情</div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="chartMonthly"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Donut Chart -->
+    <div class="panel" data-clickable id="panelStatus">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-dot dot-cyan"></div>学生状态分布
+        </div>
+        <div class="panel-hint">点击区块查看名单</div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="chartStatus"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attention List -->
+    <div class="panel span-row2" id="panelAttn">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-dot dot-rose"></div>需关注学生
+        </div>
+        <div class="panel-hint">点击查看详情</div>
+      </div>
+      <div class="attn-list" id="attnList"></div>
+    </div>
+
+    <!-- Subject Bar Chart -->
+    <div class="panel" id="panelSubject">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-dot dot-violet"></div>各科平均成绩
+        </div>
+        <div class="panel-hint">本月班级平均</div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="chartSubject"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Line Chart -->
+    <div class="panel" id="panelAttend">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-dot dot-green"></div>月度出勤率趋势
+        </div>
+        <div class="panel-hint">近6个月</div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="chartAttend"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-indicators">
+      <div class="indicator"><div class="ind-dot" style="background:var(--green)"></div>优秀 ≥90分</div>
+      <div class="indicator"><div class="ind-dot" style="background:var(--cyan)"></div>良好 80-89分</div>
+      <div class="indicator"><div class="ind-dot" style="background:var(--amber)"></div>一般 70-79分</div>
+      <div class="indicator"><div class="ind-dot" style="background:var(--rose)"></div>待提高 &lt;70分</div>
+    </div>
+    <div>数据更新时间：<span id="lastUpdate">--</span></div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card" id="modalCard">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle">详情</div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// MOCK DATA
+// ═══════════════════════════════════════════════
+
+const MONTHS = ['11月','12月','1月','2月','3月','4月'];
+const SUBJECTS = ['语文','数学','英语','物理','化学'];
+
+function rnd(min, max) { return Math.round(min + Math.random() * (max - min)); }
+
+// generate deterministic-ish data
+const RAW_STUDENTS = [
+  { id:1,  name:'张伟涛', cls:'高一(1)班', base:88, trend: 1, attend_base:97, subj:[88,92,85,90,87] },
+  { id:2,  name:'李梦琪', cls:'高一(1)班', base:94, trend: 0, attend_base:100,subj:[92,96,95,93,90] },
+  { id:3,  name:'王浩然', cls:'高一(1)班', base:72, trend:-2, attend_base:88, subj:[70,68,75,65,72] },
+  { id:4,  name:'陈思雨', cls:'高一(1)班', base:85, trend: 1, attend_base:96, subj:[84,88,87,82,86] },
+  { id:5,  name:'刘子轩', cls:'高一(1)班', base:78, trend: 0, attend_base:93, subj:[78,75,80,74,76] },
+  { id:6,  name:'赵雅婷', cls:'高一(1)班', base:91, trend: 1, attend_base:99, subj:[90,94,92,89,91] },
+  { id:7,  name:'孙明宇', cls:'高一(1)班', base:65, trend:-3, attend_base:82, subj:[64,60,68,62,65] },
+  { id:8,  name:'周紫涵', cls:'高一(1)班', base:83, trend: 0, attend_base:95, subj:[83,87,82,80,85] },
+  { id:9,  name:'吴子杰', cls:'高一(1)班', base:76, trend: 2, attend_base:91, subj:[76,79,74,73,78] },
+  { id:10, name:'郑晓彤', cls:'高一(1)班', base:89, trend: 1, attend_base:98, subj:[89,91,88,87,90] },
+  { id:11, name:'冯嘉怡', cls:'高一(1)班', base:71, trend:-1, attend_base:89, subj:[70,65,73,68,71] },
+  { id:12, name:'蒋浩宇', cls:'高一(1)班', base:82, trend: 0, attend_base:94, subj:[81,86,80,79,83] },
+  { id:13, name:'韩静怡', cls:'高一(2)班', base:90, trend: 2, attend_base:99, subj:[91,93,90,88,92] },
+  { id:14, name:'杨博文', cls:'高一(2)班', base:67, trend:-4, attend_base:80, subj:[65,62,70,60,67] },
+  { id:15, name:'朱欣彤', cls:'高一(2)班', base:86, trend: 1, attend_base:96, subj:[85,89,87,84,86] },
+  { id:16, name:'许文博', cls:'高一(2)班', base:74, trend: 0, attend_base:92, subj:[73,78,72,70,75] },
+  { id:17, name:'何雨桐', cls:'高一(2)班', base:93, trend: 1, attend_base:100,subj:[92,95,94,91,93] },
+  { id:18, name:'吕泽宇', cls:'高一(2)班', base:69, trend:-2, attend_base:85, subj:[67,65,71,63,69] },
+  { id:19, name:'林晨曦', cls:'高一(2)班', base:88, trend: 0, attend_base:97, subj:[87,91,88,86,89] },
+  { id:20, name:'罗思琪', cls:'高一(2)班', base:80, trend: 1, attend_base:94, subj:[79,83,81,77,80] },
+  { id:21, name:'高俊贤', cls:'高一(2)班', base:77, trend:-1, attend_base:90, subj:[76,74,79,72,77] },
+  { id:22, name:'谢雨欣', cls:'高一(2)班', base:95, trend: 1, attend_base:100,subj:[94,97,95,93,95] },
+  { id:23, name:'唐子豪', cls:'高一(2)班', base:62, trend:-3, attend_base:78, subj:[60,58,65,55,62] },
+  { id:24, name:'曹思远', cls:'高一(2)班', base:84, trend: 0, attend_base:95, subj:[83,87,85,82,84] },
+];
+
+// Build monthly scores for each student (6 months)
+const STUDENTS = RAW_STUDENTS.map(s => {
+  const scores = MONTHS.map((_, i) => {
+    const base = s.base + s.trend * i;
+    return Math.min(100, Math.max(50, base + (Math.sin(i * 1.3 + s.id) * 4 | 0)));
+  });
+  const attendances = MONTHS.map((_, i) => {
+    const base = s.attend_base - i * 0.3;
+    return Math.min(100, Math.max(60, base + (Math.sin(i * 2 + s.id) * 2 | 0)));
+  });
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  let status;
+  if (avg >= 90) status = '优秀';
+  else if (avg >= 80) status = '良好';
+  else if (avg >= 70) status = '一般';
+  else status = '待提高';
+
+  const scoreDrop = scores[scores.length-1] - scores[scores.length-2];
+  const lastAttend = attendances[attendances.length-1];
+
+  const alerts = [];
+  if (scoreDrop <= -8) alerts.push({ type:'drop',  label:'成绩骤降' });
+  if (lastAttend < 85) alerts.push({ type:'absen', label:'出勤偏低' });
+  if (scores[scores.length-1] < 68) alerts.push({ type:'low',   label:'成绩偏低' });
+
+  return { ...s, scores, attendances, avg: +avg.toFixed(1), status, scoreDrop, lastAttend, alerts };
+});
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+
+let currentClass = '全部';
+let charts = {};
+
+function getFiltered() {
+  if (currentClass === '全部') return STUDENTS;
+  return STUDENTS.filter(s => s.cls === currentClass);
+}
+
+// ═══════════════════════════════════════════════
+// CHART DEFAULTS
+// ═══════════════════════════════════════════════
+
+Chart.defaults.color = 'rgba(220,233,255,0.48)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "'PingFang SC','Microsoft YaHei',system-ui,sans-serif";
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ═══════════════════════════════════════════════
+// BUILD CHARTS
+// ═══════════════════════════════════════════════
+
+function buildMonthlyChart() {
+  const students = getFiltered();
+  const monthlyAvg = MONTHS.map((_, mi) => {
+    const scores = students.map(s => s.scores[mi]);
+    return +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+  });
+
+  const ctx = document.getElementById('chartMonthly');
+  if (charts.monthly) charts.monthly.destroy();
+
+  charts.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: '月均分',
+        data: monthlyAvg,
+        backgroundColor: MONTHS.map((_, i) =>
+          i === MONTHS.length-1
+            ? 'rgba(245,158,11,0.85)'
+            : 'rgba(245,158,11,0.35)'
+        ),
+        borderColor: MONTHS.map((_, i) =>
+          i === MONTHS.length-1 ? '#f59e0b' : 'rgba(245,158,11,0.5)'
+        ),
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const mi = elements[0].index;
+        showMonthModal(mi);
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` 平均分：${ctx.parsed.y} 分`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 50, max: 100,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { stepSize: 10 }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildStatusChart() {
+  const students = getFiltered();
+  const counts = { '优秀':0, '良好':0, '一般':0, '待提高':0 };
+  students.forEach(s => counts[s.status]++);
+
+  const ctx = document.getElementById('chartStatus');
+  if (charts.status) charts.status.destroy();
+
+  charts.status = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{
+        data: Object.values(counts),
+        backgroundColor: [
+          'rgba(74,222,128,0.75)',
+          'rgba(34,211,238,0.75)',
+          'rgba(245,158,11,0.75)',
+          'rgba(251,113,133,0.75)',
+        ],
+        borderColor: ['#4ade80','#22d3ee','#f59e0b','#fb7185'],
+        borderWidth: 2,
+        hoverOffset: 10,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const label = Object.keys(counts)[elements[0].index];
+        showStatusModal(label);
+      },
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            boxWidth: 10,
+            padding: 14,
+            font: { size: 12 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}：${ctx.parsed} 人`
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildSubjectChart() {
+  const students = getFiltered();
+  const subjectAvg = SUBJECTS.map((_, si) => {
+    const scores = students.map(s => s.subj[si]);
+    return +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+  });
+
+  const colors = ['rgba(167,139,250,0.75)','rgba(167,139,250,0.6)','rgba(167,139,250,0.5)','rgba(167,139,250,0.4)','rgba(167,139,250,0.3)'];
+
+  const ctx = document.getElementById('chartSubject');
+  if (charts.subject) charts.subject.destroy();
+
+  charts.subject = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: SUBJECTS,
+      datasets: [{
+        label: '班级平均分',
+        data: subjectAvg,
+        backgroundColor: 'rgba(167,139,250,0.6)',
+        borderColor: '#a78bfa',
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` 均分：${ctx.parsed.x} 分`
+          }
+        }
+      },
+      scales: {
+        x: {
+          min: 50, max: 100,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { stepSize: 10 }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildAttendChart() {
+  const students = getFiltered();
+  const monthlyAttend = MONTHS.map((_, mi) => {
+    const atts = students.map(s => s.attendances[mi]);
+    return +(atts.reduce((a,b)=>a+b,0)/atts.length).toFixed(1);
+  });
+
+  const ctx = document.getElementById('chartAttend');
+  if (charts.attend) charts.attend.destroy();
+
+  charts.attend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: '出勤率',
+        data: monthlyAttend,
+        borderColor: '#4ade80',
+        backgroundColor: 'rgba(74,222,128,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointBackgroundColor: '#4ade80',
+        pointBorderColor: '#0b1928',
+        pointBorderWidth: 2,
+        tension: 0.35,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` 出勤率：${ctx.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 80, max: 100,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => v + '%' }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// ATTENTION LIST
+// ═══════════════════════════════════════════════
+
+function buildAttnList() {
+  const students = getFiltered();
+  const alerts = students
+    .filter(s => s.alerts.length > 0)
+    .sort((a, b) => b.alerts.length - a.alerts.length);
+
+  const el = document.getElementById('attnList');
+  el.innerHTML = '';
+
+  if (alerts.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--dim)">✅ 暂无需关注学生</div>`;
+    return;
+  }
+
+  alerts.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'attn-item';
+    div.innerHTML = `
+      <div class="attn-avatar">${s.name[0]}</div>
+      <div class="attn-info">
+        <div class="attn-name">${s.name}</div>
+        <div class="attn-desc">${s.cls} · 本月 ${s.scores[5]} 分</div>
+      </div>
+      ${s.alerts.map(a => `<div class="attn-tag tag-${a.type}">${a.label}</div>`).join('')}
+    `;
+    div.addEventListener('click', () => showStudentModal(s));
+    el.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// KPI CARDS
+// ═══════════════════════════════════════════════
+
+function animateCount(el, to, suffix='', decimals=0) {
+  const start = 0;
+  const dur = 1200;
+  const startTime = performance.now();
+  function step(now) {
+    const p = Math.min((now - startTime) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val = start + (to - start) * ease;
+    el.textContent = (decimals ? val.toFixed(decimals) : Math.round(val)) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function updateKPIs() {
+  const students = getFiltered();
+  const lastIdx = MONTHS.length - 1;
+  const prevIdx = MONTHS.length - 2;
+
+  const currentAvgs = students.map(s => s.scores[lastIdx]);
+  const prevAvgs    = students.map(s => s.scores[prevIdx]);
+  const avgNow  = +(currentAvgs.reduce((a,b)=>a+b,0)/currentAvgs.length).toFixed(1);
+  const avgPrev = +(prevAvgs.reduce((a,b)=>a+b,0)/prevAvgs.length).toFixed(1);
+  const diff = +(avgNow - avgPrev).toFixed(1);
+
+  const attendances = students.map(s => s.attendances[lastIdx]);
+  const avgAttend = +(attendances.reduce((a,b)=>a+b,0)/attendances.length).toFixed(1);
+
+  const alertCount = students.filter(s => s.alerts.length > 0).length;
+
+  animateCount(document.getElementById('kpiTotal'), students.length);
+  animateCount(document.getElementById('kpiAvg'), avgNow, '', 1);
+  animateCount(document.getElementById('kpiAttend'), avgAttend, '%', 1);
+  animateCount(document.getElementById('kpiAlert'), alertCount);
+
+  const badge = document.getElementById('kpiAvgBadge');
+  if (diff > 0) {
+    badge.textContent = `↑ ${diff} 分 vs 上月`;
+    badge.className = 'kpi-badge up';
+  } else if (diff < 0) {
+    badge.textContent = `↓ ${Math.abs(diff)} 分 vs 上月`;
+    badge.className = 'kpi-badge down';
+  } else {
+    badge.textContent = `= 与上月持平`;
+    badge.className = 'kpi-badge';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+
+function openModal(title, sub, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function showMonthModal(monthIndex) {
+  const students = getFiltered();
+  const month = MONTHS[monthIndex];
+  const withScores = students
+    .map(s => ({ ...s, thisScore: s.scores[monthIndex] }))
+    .sort((a, b) => b.thisScore - a.thisScore);
+
+  const avg = (withScores.reduce((a,b)=>a+b.thisScore,0)/withScores.length).toFixed(1);
+  const top3 = withScores.slice(0, 3);
+  const bottom3 = withScores.slice(-3).reverse();
+
+  const scoreRanges = [
+    { label:'≥90分', min:90, max:101, color:'var(--green)' },
+    { label:'80-89',  min:80, max:90,  color:'var(--cyan)' },
+    { label:'70-79',  min:70, max:80,  color:'var(--amber)' },
+    { label:'<70分',  min:0,  max:70,  color:'var(--rose)' },
+  ];
+
+  const distributionHtml = scoreRanges.map(r => {
+    const cnt = withScores.filter(s => s.thisScore >= r.min && s.thisScore < r.max).length;
+    const pct = Math.round(cnt / withScores.length * 100);
+    return `
+      <div class="subject-row">
+        <div class="subject-name" style="font-size:.7rem">${r.label}</div>
+        <div class="subject-bar-bg">
+          <div class="subject-bar-fill" style="width:${pct}%;background:${r.color}"></div>
+        </div>
+        <div class="subject-score" style="color:${r.color}">${cnt}人</div>
+      </div>`;
+  }).join('');
+
+  const topHtml = top3.map((s,i) => `
+    <tr>
+      <td><span class="rank-badge" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green)">TOP${i+1}</span></td>
+      <td style="font-weight:700">${s.name}</td>
+      <td style="color:var(--dim)">${s.cls}</td>
+      <td><span style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--green)">${s.thisScore}</span></td>
+    </tr>`).join('');
+
+  const bottomHtml = bottom3.map((s,i) => `
+    <tr>
+      <td><span class="rank-badge" style="background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);color:var(--rose)">低${i+1}</span></td>
+      <td style="font-weight:700">${s.name}</td>
+      <td style="color:var(--dim)">${s.cls}</td>
+      <td><span style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--rose)">${s.thisScore}</span></td>
+    </tr>`).join('');
+
+  openModal(`${month} 成绩详情`, `班级均分 ${avg} 分 · 共 ${withScores.length} 人`, `
+    <div class="modal-section-title">成绩分布</div>
+    <div class="subject-mini">${distributionHtml}</div>
+
+    <div class="modal-section-title">成绩排名（前3 / 后3）</div>
+    <table class="month-table">
+      <thead><tr><th>排名</th><th>姓名</th><th>班级</th><th>分数</th></tr></thead>
+      <tbody>${topHtml}<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:4px">· · ·</td></tr>${bottomHtml}</tbody>
+    </table>
+  `);
+}
+
+function showStatusModal(status) {
+  const students = getFiltered().filter(s => s.status === status);
+  const colorMap = { '优秀':'var(--green)', '良好':'var(--cyan)', '一般':'var(--amber)', '待提高':'var(--rose)' };
+  const color = colorMap[status] || 'var(--text)';
+
+  const cardsHtml = students.map(s => `
+    <div class="student-card" onclick="showStudentModal(STUDENTS.find(x=>x.id===${s.id}))">
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-cls">${s.cls}</div>
+      <div class="sc-score" style="color:${color}">${s.scores[5]}</div>
+    </div>`).join('');
+
+  openModal(`${status} 学生名单`, `共 ${students.length} 人 · 点击查看个人详情`, `
+    <div class="student-grid">${cardsHtml}</div>
+  `);
+}
+
+function showStudentModal(s) {
+  const maxScore = 100;
+  const colors = ['#f59e0b','#a78bfa','#22d3ee','#4ade80','#fb7185'];
+  const subjHtml = SUBJECTS.map((sub, i) => {
+    const score = s.subj[i];
+    const pct = (score - 50) / 50 * 100;
+    return `
+      <div class="subject-row">
+        <div class="subject-name">${sub}</div>
+        <div class="subject-bar-bg">
+          <div class="subject-bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
+        </div>
+        <div class="subject-score" style="color:${colors[i]}">${score}</div>
+      </div>`;
+  }).join('');
+
+  const trendBarsHtml = s.scores.map((sc, i) => {
+    const pct = (sc - 50) / 50 * 100;
+    const isLast = i === s.scores.length - 1;
+    const color = isLast ? '#f59e0b' : 'rgba(245,158,11,0.4)';
+    return `
+      <div class="trend-bar-wrap">
+        <div class="trend-val" style="color:${color}">${sc}</div>
+        <div class="trend-bar" style="height:${pct}%;background:${color};width:100%"></div>
+        <div class="trend-label">${MONTHS[i]}</div>
+      </div>`;
+  }).join('');
+
+  const statusColorMap = { '优秀':'var(--green)', '良好':'var(--cyan)', '一般':'var(--amber)', '待提高':'var(--rose)' };
+  const sColor = statusColorMap[s.status];
+
+  const alertTagsHtml = s.alerts.map(a =>
+    `<div class="tag-small tag-${a.type}">${a.label}</div>`
+  ).join('');
+
+  const avgAttend = (s.attendances.reduce((a,b)=>a+b,0)/s.attendances.length).toFixed(1);
+  const scoreDiff = s.scores[5] - s.scores[4];
+  const diffStr = scoreDiff > 0 ? `↑${scoreDiff}` : scoreDiff < 0 ? `↓${Math.abs(scoreDiff)}` : '持平';
+  const diffColor = scoreDiff > 0 ? 'var(--green)' : scoreDiff < 0 ? 'var(--rose)' : 'var(--dim)';
+
+  openModal(s.name, `${s.cls} · ${s.status}`, `
+    <div class="profile-header">
+      <div class="profile-avatar">${s.name[0]}</div>
+      <div>
+        <div class="profile-info-name">${s.name}</div>
+        <div class="profile-info-meta">${s.cls} &nbsp;·&nbsp; 学号 #${String(s.id).padStart(3,'0')}</div>
+        <div class="profile-tags">
+          <div class="tag-small" style="border-color:${sColor};color:${sColor}">${s.status}</div>
+          ${alertTagsHtml}
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-mini">
+        <div class="stat-mini-label">本月成绩</div>
+        <div class="stat-mini-val" style="color:var(--amber)">${s.scores[5]}</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-label">环比变化</div>
+        <div class="stat-mini-val" style="color:${diffColor}">${diffStr}</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-label">平均出勤</div>
+        <div class="stat-mini-val" style="color:var(--green)">${avgAttend}%</div>
+      </div>
+    </div>
+
+    <div class="modal-section-title">近6个月成绩趋势</div>
+    <div class="score-trend">${trendBarsHtml}</div>
+
+    <div class="modal-section-title">本月各科成绩</div>
+    <div class="subject-mini">${subjHtml}</div>
+  `);
+}
+
+// ═══════════════════════════════════════════════
+// ACTIVITY FEED (dynamic)
+// ═══════════════════════════════════════════════
+
+const FEED_EVENTS = [
+  { text: '张伟涛 本月数学成绩提升 <strong>7分</strong>，表现优秀', color:'var(--green)',  time:'09:42' },
+  { text: '杨博文 连续3次成绩下滑，建议约谈家长', color:'var(--rose)',   time:'09:15' },
+  { text: '谢雨欣 蝉联本班<strong>第一名</strong>，平均分 95.4', color:'var(--amber)',  time:'08:58' },
+  { text: '孙明宇 本月出勤率 82%，已发送预警通知', color:'var(--rose)',   time:'08:30' },
+  { text: '韩静怡 成绩环比上升 <strong>4分</strong>，进步明显', color:'var(--cyan)',   time:'昨日' },
+  { text: '唐子豪 物理成绩 55分，触发低分预警', color:'var(--rose)',   time:'昨日' },
+  { text: '李梦琪 保持全勤记录，出勤率 <strong>100%</strong>', color:'var(--green)',  time:'前日' },
+];
+
+// ═══════════════════════════════════════════════
+// INIT & RENDER
+// ═══════════════════════════════════════════════
+
+function renderAll() {
+  updateKPIs();
+  buildMonthlyChart();
+  buildStatusChart();
+  buildSubjectChart();
+  buildAttendChart();
+  buildAttnList();
+}
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+
+  const y = now.getFullYear();
+  const mo = now.getMonth()+1;
+  const d = now.getDate();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('clockDate').textContent =
+    `${y}年${mo}月${d}日 · 周${days[now.getDay()]}`;
+
+  document.getElementById('lastUpdate').textContent =
+    `${hh}:${mm}:${ss}`;
+}
+
+// Class filter
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentClass = btn.dataset.class;
+    renderAll();
+  });
+});
+
+// Modal close
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// Init
+setInterval(updateClock, 1000);
+updateClock();
+renderAll();
+</script>
+</body>
+</html>
