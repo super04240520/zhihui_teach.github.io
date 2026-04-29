@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脚本设计课程评价大屏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body data-course="script">
+<script>window.CURRENT_DASHBOARD_COURSE='script';</script>
+
+<canvas id="neuralBg"></canvas>
+<div class="scanlines"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+
+<div class="screen">
+  <div class="header">
+    <div class="hd-brand">
+      <div class="hd-icon" id="brandIcon">📝</div>
+      <div>
+        <div class="hd-title" id="brandTitleText">LIVE · AI 课程评价系统</div>
+        <div class="hd-sub" id="brandSubText">直播电商（酒庄方向） · 脚本设计课程评价大屏 · 2024-01期</div>
+      </div>
+      <div class="live-badge" style="margin-left:14px"><div class="live-dot"></div>EVAL</div>
+    </div>
+    <div class="hd-right">
+      <div class="clock-time" id="clockTime">--:--:--</div>
+      <div class="clock-date" id="clockDate">----年--月--日</div>
+    </div>
+  </div>
+
+  <div class="overview-hub">
+    <div class="class-summary-card active" id="classSummaryCard"></div>
+    <div class="group-board">
+      <div class="group-head">
+        <div>
+          <div class="group-title">小组概览</div>
+          <div class="group-sub" id="groupSub">点击小组下钻查看成员与模块表现</div>
+        </div>
+        <div class="group-actions">
+          <button class="shuffle-btn" id="reshuffleBtn">随机重组</button>
+        </div>
+      </div>
+      <div class="group-list" id="groupSummaryList"></div>
+    </div>
+  </div>
+
+  <div class="control-bar">
+    <div class="control-view">
+      <div class="view-main">
+        <div class="view-label">当前主视图</div>
+        <div class="view-title" id="viewTitle">班级总评</div>
+        <div class="view-desc" id="viewDesc">默认展示班级整体表现，小组与个人作为下钻入口。</div>
+      </div>
+      <div class="score-chip sc-cyan" id="viewChip">班级均分 / 100</div>
+    </div>
+
+    <div class="control-students">
+      <div class="entry-label">
+        <div class="entry-title">成员切换</div>
+        <div class="entry-sub" id="entrySub">当前展示全部 24 名学生，点击任一学生可进入个人明细。</div>
+      </div>
+      <div class="stu-picker" id="stuPicker"></div>
+    </div>
+  </div>
+
+  <div class="eval-grid">
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-cyan"></div><span id="moduleTitleM1">M1 · 课前学习习惯</span></div><div class="score-chip sc-cyan" id="chip1"></div></div>
+      <div class="pb">
+        <div class="donut-wrap"><canvas id="chartM1"></canvas>
+          <div class="donut-center"><div class="dc-score" id="dc1"></div><div class="dc-max" id="dcMax1">/ 10 分</div></div>
+        </div>
+        <div class="sub-list" id="subM1"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-blue"></div><span id="moduleTitleM2">M2 · 课堂参与表现</span></div><div class="score-chip sc-blue" id="chip2"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM2"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-amber"></div><span id="moduleTitleM8">M8 · 综合脚本项目成果</span></div><div class="score-chip sc-gold" id="chip8"></div></div>
+      <div class="pb">
+        <div class="big-card">
+          <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;margin-bottom:2px" id="bigCardTitle">综合脚本项目得分</div>
+          <div class="big-score" id="bigScore"></div>
+          <div class="big-max" id="bigLabel"></div>
+          <div class="big-sub" style="margin-top:10px" id="bigSub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-violet"></div><span id="moduleTitleM3">M3 · 理论知识掌握</span></div><div class="score-chip sc-violet" id="chip3"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM3"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-amber"></div><span id="moduleTitleM4">M4 · 脚本设计能力</span></div><div class="score-chip sc-amber" id="chip4"></div></div>
+      <div class="pb">
+        <div class="cw"><canvas id="chartM4"></canvas></div>
+        <div class="sub-list" style="margin-top:4px" id="subM4"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-violet"></div><span id="moduleTitleM7">M7 · AI 与创新应用</span></div><div class="score-chip sc-violet" id="chip7"></div></div>
+      <div class="pb"><div class="cw"><canvas id="chartM7"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-green"></div><span id="moduleTitleM5">M5 · 脚本呈现表现</span></div><div class="score-chip sc-green" id="chip5"></div></div>
+      <div class="pb">
+        <div class="gauge-wrap"><canvas id="chartM5"></canvas></div>
+        <div class="sub-list" id="subM5"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-teal"></div><span id="moduleTitleM6">M6 · 复盘优化能力</span></div><div class="score-chip sc-teal" id="chip6"></div></div>
+      <div class="pb">
+        <div class="cw"><canvas id="chartM6"></canvas></div>
+        <div class="sub-list" style="margin-top:4px" id="subM6"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt"><div class="pdot pd-cyan"></div>综合总分汇总</div><div class="score-chip sc-cyan" id="chipTotal"></div></div>
+      <div class="pb">
+        <div class="total-card">
+          <div class="total-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="45"/>
+              <circle class="ring-fill" id="totalRing" cx="50" cy="50" r="45" stroke="url(#ringGrad)"/>
+              <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#8b5cf6"/>
+              </linearGradient></defs>
+            </svg>
+            <div class="total-inner"><div class="total-num" id="totalNum">0</div><div class="total-denom">/ 100</div></div>
+          </div>
+          <div class="total-label" id="totalLabel">TOTAL SCORE</div>
+          <div class="total-grade" id="totalGrade"></div>
+          <div class="module-pills" id="modulePills"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="foot-mods" id="footerModules"></div>
+    <div>NEURAL·AI 评估系统 · 评估时间：<span id="lastUpdate">--</span></div>
+  </div>
+</div>
+
+<div class="ai-mascot-wrap" id="aiMascotWrap">
+  <div class="mascot-outer">
+    <div class="mring"><div class="mring-dot"></div></div>
+    <div class="mbody"><div class="rface">
+      <div class="reyes"><div class="reye l"></div><div class="reye r"></div></div>
+      <div class="rmouth"></div><div class="rai">A · I</div>
+    </div></div>
+  </div>
+  <div class="mlabel">AI 洞察</div>
+</div>
+
+<div class="ai-panel" id="aiPanel">
+  <div class="aph">
+    <div class="apt"><div class="ath"></div><span id="aiPanelTitle">AI 智能洞察分析</span></div>
+    <button class="apc" id="aiClose">✕</button>
+  </div>
+  <div class="api-list" id="aiInsights"></div>
+  <div class="apf" id="aiPanelFooter">由 AI 自动分析 · 基于课程8模块数据生成</div>
+</div>
+
+<script src="./constant/dashboard.js"></script>
+<script src="./js/dashboard.js?v=20260420-02"></script>
+</body>
+</html>

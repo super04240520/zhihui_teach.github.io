@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>入职训练营 · 泡泡消除</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/index.css" />
+  </head>
+  <body>
+    <div class="game-container">
+      <!-- Header -->
+      <div class="game-header">
+        <div class="game-eyebrow">ONBOARDING TRAINING CAMP</div>
+        <h1 class="game-title">入职训练营 · <em>泡泡消除</em></h1>
+        <p class="game-subtitle">点击泡泡 → 答题掌握知识点 → 消除得分</p>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats-bar">
+        <div class="stat-block">
+          <div class="stat-icon gold-bg">🏅</div>
+          <div>
+            <div class="stat-label">入职积分</div>
+            <div class="stat-num gold" id="scoreValue">0</div>
+          </div>
+        </div>
+        <div class="stats-sep"></div>
+        <div class="stat-block right">
+          <div>
+            <div class="stat-label" style="text-align: right">待掌握</div>
+            <div class="stat-num cyan" id="bubblesCount">0</div>
+          </div>
+          <div class="stat-icon cyan-bg">🫧</div>
+        </div>
+      </div>
+
+      <!-- Category legend -->
+      <div class="legend-row">
+        <div class="legend-chip lc1">
+          <div class="ldot"></div>
+          取信三要素
+        </div>
+        <div class="legend-chip lc2">
+          <div class="ldot"></div>
+          促单三心理
+        </div>
+        <div class="legend-chip lc3">
+          <div class="ldot"></div>
+          促单逻辑
+        </div>
+      </div>
+
+      <!-- Bubble grid -->
+      <div id="bubblesGrid" class="bubbles-grid"></div>
+      <!-- Bottom -->
+      <div class="bottom-section">
+          <div class="bottom-btns">
+        <button id="resetGameBtn" class="reset-btn">
+          ↺ &nbsp;重来一次 · 强化训练
+        </button>
+        <a href="dashboard.html" target="_blank" class="nav-btn"
+          >📊 &nbsp;学情监控大屏</a
+        >
+      </div>
+        <footer>每个泡泡 +2 积分 · 全部消除解锁入职专家称号</footer>
+      </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-tag">🧠 &nbsp;新员工训练营</div>
+        <div id="modalBubbleName" class="modal-bubble-name"></div>
+        <div id="modalQuestion" class="modal-question"></div>
+        <input
+          type="text"
+          id="answerInput"
+          class="modal-input"
+          placeholder="输入你的答案..."
+          autocomplete="off"
+        />
+        <div class="modal-buttons">
+          <button id="submitAnswerBtn" class="modal-btn confirm">
+            🎯 &nbsp;消除泡泡 +2分
+          </button>
+          <button id="closeModalBtn" class="modal-btn cancel">再想想</button>
+        </div>
+        <div id="modalFeedback" class="feedback"></div>
+      </div>
+    </div>
+    <script src="./js/index.js?v=20260420-01"></script>
+  </body>
+</html>
