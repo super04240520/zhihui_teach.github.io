@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新手—熟手—能手 成长阶梯全景监测</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #0C0F2E;
+  --card:   rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.13);
+  --text:   #F1F5FF;
+  --muted:  #7B8DB0;
+  --pri:    #9DA8FF;
+}
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 65% 55% at 10% 10%, rgba(99,102,241,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 90% 90%, rgba(139,92,246,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 55% 45%, rgba(6,214,160,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(72,149,239,0.12) 0%, transparent 50%);
+}
+
+#bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ── Screen ── */
+.screen {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-rows: 62px 1fr;
+  height: 100vh;
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+/* ── Header ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 0 20px;
+  backdrop-filter: blur(24px);
+}
+.hdr-left  { display: flex; align-items: center; gap: 14px; }
+.hdr-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--pri); letter-spacing: 1.5px; }
+.hdr-dot   { width: 7px; height: 7px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 8px #4ADE80; animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.hdr-sep   { width: 1px; height: 26px; background: var(--border); }
+.hdr-title { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; background: linear-gradient(90deg,#A5B4FC,#C084FC,#F9A8D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hdr-time  { font-size: 22px; font-weight: 700; letter-spacing: 2px; font-variant-numeric: tabular-nums; text-align: right; }
+.hdr-date  { font-size: 11px; color: var(--muted); text-align: right; margin-top: 1px; }
+.hdr-task  { font-size: 11px; color: var(--pri); text-align: right; margin-top: 2px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.9; }
+
+/* ── Body grid ── */
+.body { display: grid; grid-template-columns: 248px 1fr 268px; gap: 10px; min-height: 0; }
+.gc   { background: var(--card); border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(24px); box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+
+/* ── Left panel ── */
+.lp { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+
+.score-card { flex-shrink: 0; padding: 16px 16px 12px; text-align: center; position: relative; overflow: hidden; }
+.score-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg,#818CF8,#C084FC,#F9A8D4,#FFD166); }
+.sc-glow { position:absolute; top:-40px; left:50%; transform:translateX(-50%); width:160px; height:160px; border-radius:50%; background:radial-gradient(circle,rgba(129,140,248,0.12),transparent 65%); pointer-events:none; }
+.sc-lbl  { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 2px; }
+.sc-num-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+.sc-num  { font-size: 80px; font-weight: 900; line-height: 1; background: linear-gradient(135deg,#fff 0%,#C7D2FE 55%,#818CF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 0 20px rgba(129,140,248,0.4)); }
+.sc-denom { font-size: 17px; color: var(--muted); font-weight: 500; }
+.sc-stage { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; background: rgba(129,140,248,0.12); border: 1px solid rgba(129,140,248,0.22); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; color: var(--pri); }
+
+.task-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 12px 10px; }
+.tp-title   { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.task-list  { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.task-item  { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.task-item:hover { background: rgba(255,255,255,0.03); }
+.task-item.active { background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.28); }
+.ti-num  { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
+.task-item.active .ti-num { background: var(--pri); color: #fff; box-shadow: 0 0 10px rgba(129,140,248,0.5); }
+.ti-body { flex: 1; min-width: 0; }
+.ti-name  { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-item.active .ti-name { color: var(--pri); }
+
+/* 3-segment stacked mini bar */
+.ti-bar   { margin-top: 3px; height: 4px; border-radius: 2px; overflow: hidden; display: flex; }
+.ti-seg   { height: 100%; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+
+.ti-score { font-size: 13px; font-weight: 800; color: var(--pri); flex-shrink: 0; }
+
+/* ── Center panel ── */
+.cp { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.mods-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; flex-shrink: 0; }
+
+/* ── Module card ── */
+.mod-card {
+  padding: 14px 12px 12px; text-align: center;
+  cursor: pointer; transition: all 0.25s;
+  border: 1px solid var(--border); border-radius: 16px;
+  background: var(--card); position: relative; overflow: hidden;
+}
+.mod-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--mc); }
+.mod-card.active { border-color: var(--mc); box-shadow: 0 0 28px var(--mg), inset 0 1px 0 rgba(255,255,255,0.04); }
+.mod-card:hover:not(.active) {
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, var(--mg) 0%, transparent 80%);
+}
+.mod-card.active {
+  background: linear-gradient(180deg, var(--mg) 0%, transparent 80%);
+}
+.mod-card:active { transform: scale(0.98); }
+
+.mod-hd    { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px; }
+.mod-icon  { font-size: 16px; }
+.mod-name  { font-size: 13px; font-weight: 700; color: var(--text); }
+
+/* Ring (smaller) */
+.ring-wrap  { position: relative; width: 80px; height: 80px; margin: 0 auto 4px; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.r-bg   { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 7; }
+.r-fill { fill: none; stroke: var(--mc); stroke-width: 7; stroke-linecap: round; filter: drop-shadow(0 0 8px var(--mc)) drop-shadow(0 0 16px var(--mc)); transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1); }
+.ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-score { font-size: 24px; font-weight: 900; color: var(--mc); line-height: 1; filter: drop-shadow(0 0 10px var(--mc)); }
+.ring-max   { font-size: 10px; color: var(--muted); }
+
+/* Trend label below ring */
+.ring-trend { font-size: 10px; font-weight: 700; color: var(--mc); opacity: 0.75; margin-bottom: 4px; letter-spacing: 0.3px; }
+
+.mod-tag { display: inline-block; font-size: 10px; font-weight: 700; color: var(--mc); background: var(--mg); padding: 2px 10px; border-radius: 8px; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+/* Mini chart area */
+.mc-bar-wrap  { position: relative; height: 110px; margin-bottom: 8px; }
+.mc-sq-wrap   { width: 110px; height: 110px; margin: 0 auto 8px; position: relative; }
+
+/* Dim rows */
+.mod-dims { display: flex; flex-direction: column; gap: 4px; }
+.mdr { display: flex; align-items: center; gap: 5px; font-size: 10px; padding: 0 1px; }
+.mdr-name  { color: var(--muted); flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mdr-score { color: var(--mc); font-weight: 700; min-width: 18px; text-align: right; }
+.mdr-bar   { width: 32px; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.mdr-fill  { height: 100%; background: var(--mc); border-radius: 2px; transition: width 0.6s; }
+.mc-chart-hint { font-size: 9px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.5px; }
+
+/* Bottom chart panel */
+.chart-panel { flex: 1; min-height: 0; padding: 12px 16px 10px; display: flex; flex-direction: column; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-shrink: 0; }
+.cp-head-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.cp-head-title::before { content:''; width:3px; height:13px; background:var(--pri); border-radius:2px; }
+.cp-legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.cp-leg    { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.cp-leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-area { flex: 1; min-height: 0; position: relative; }
+
+/* ── Right panel ── */
+.rp { display: flex; flex-direction: column; padding: 12px 10px 10px; min-height: 0; }
+.rp-title { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.dim-grid { flex: 1; display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; min-height: 0; }
+.dim-box  { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 13px; padding: 10px 10px 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.dim-box::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--dc); box-shadow:0 0 12px var(--dc); }
+.dim-chip  { font-size: 9px; font-weight: 700; color: var(--dc); background: var(--db); padding: 2px 7px; border-radius: 6px; margin-bottom: 4px; width: fit-content; }
+.dim-name  { font-size: 11px; color: var(--muted); font-weight: 500; line-height: 1.3; flex: 1; margin-bottom: 4px; }
+.dim-score-row { display: flex; align-items: baseline; gap: 2px; margin-bottom: 6px; }
+.dim-num   { font-size: 30px; font-weight: 900; color: var(--dc); line-height: 1; filter: drop-shadow(0 0 6px var(--dc)); }
+.dim-slash { font-size: 11px; color: var(--muted); }
+.dim-bar-bg   { height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+.dim-bar-fill { height: 100%; background: var(--dc); box-shadow: 0 0 5px var(--dc); border-radius: 3px; transition: width 0.65s cubic-bezier(0.4,0,0.2,1); }
+
+@keyframes popIn { 0%{transform:scale(0.96);opacity:.7} 55%{transform:scale(1.03);opacity:1} 100%{transform:scale(1);opacity:1} }
+.pop { animation: popIn 0.3s ease; }
+
+/* ── Radar + Heatmap panel ── */
+.radar-area   { flex: 1; min-height: 0; position: relative; }
+.heatmap-area { flex-shrink: 0; height: 200px; margin-top: 8px; position: relative; }
+.heatmap-area canvas { display: block; }
+
+/* ── Score card module breakdown ── */
+.sc-mods { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.sc-mod-row {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 9px; padding: 5px 9px;
+}
+.sc-mod-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sc-mod-name { font-size: 11px; color: var(--muted); flex: 1; text-align: left; font-weight: 500; }
+.sc-mod-val  { font-size: 15px; font-weight: 900; }
+.sc-mod-max  { font-size: 10px; color: var(--muted); }
+.sc-mod-bar-bg   { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.sc-mod-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+/* ── Score card stacked proportion bar ── */
+.sc-prop-bar {
+  margin-top: 10px; height: 7px; border-radius: 4px; overflow: hidden;
+  display: flex; width: 100%;
+}
+.sc-prop-seg { height: 100%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+/* ── Heatmap color legend ── */
+.heatmap-legend {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px; padding: 0 2px; flex-shrink: 0;
+}
+.hm-leg-label { font-size: 9px; color: var(--muted); font-weight: 600; }
+.hm-leg-strip { flex: 1; height: 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="screen">
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-badge"><div class="hdr-dot"></div>LIVE · EVAL</div>
+      <div class="hdr-sep"></div>
+      <div class="hdr-title">新手 — 熟手 — 能手 · 成长阶梯全景监测</div>
+    </div>
+    <div>
+      <div class="hdr-time" id="clock">--:--:--</div>
+      <div class="hdr-date" id="dateStr">直播电商综合实训评价系统</div>
+      <div class="hdr-task" id="hdrTask">当前任务: —</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Left -->
+    <div class="lp">
+      <div class="gc score-card" onclick="selectTask(-1)" title="点击返回总览" style="cursor:pointer">
+        <div class="sc-glow"></div>
+        <div class="sc-lbl">总 评 得 分</div>
+        <div class="sc-num-row">
+          <div class="sc-num" id="totalScore">0</div>
+          <div class="sc-denom"> / 100</div>
+        </div>
+        <div class="sc-stage" id="scStage">🌱 成长中</div>
+        <div class="sc-mods">
+          <div class="sc-mod-row">
+            <div class="sc-mod-dot" style="background:#06D6A0;box-shadow:0 0 6px #06D6A0"></div>
+            <div class="sc-mod-name">基础达标</div>
+            <div class="sc-mod-bar-bg"><div class="sc-mod-bar-fill" id="smbar-0" style="background:#06D6A0;width:0%"></div></div>
+            <div class="sc-mod-val" id="smv-0" style="color:#06D6A0">0</div>
+            <div class="sc-mod-max">/30</div>
+          </div>
+          <div class="sc-mod-row">
+            <div class="sc-mod-dot" style="background:#4895EF;box-shadow:0 0 6px #4895EF"></div>
+            <div class="sc-mod-name">能力提级</div>
+            <div class="sc-mod-bar-bg"><div class="sc-mod-bar-fill" id="smbar-1" style="background:#4895EF;width:0%"></div></div>
+            <div class="sc-mod-val" id="smv-1" style="color:#4895EF">0</div>
+            <div class="sc-mod-max">/50</div>
+          </div>
+          <div class="sc-mod-row">
+            <div class="sc-mod-dot" style="background:#FFD166;box-shadow:0 0 6px #FFD166"></div>
+            <div class="sc-mod-name">应用创新</div>
+            <div class="sc-mod-bar-bg"><div class="sc-mod-bar-fill" id="smbar-2" style="background:#FFD166;width:0%"></div></div>
+            <div class="sc-mod-val" id="smv-2" style="color:#FFD166">0</div>
+            <div class="sc-mod-max">/20</div>
+          </div>
+        </div>
+        <!-- Stacked proportion bar -->
+        <div class="sc-prop-bar" id="scPropBar">
+          <div class="sc-prop-seg" id="propSeg-0" style="background:#06D6A0;width:0%"></div>
+          <div class="sc-prop-seg" id="propSeg-1" style="background:#4895EF;width:0%"></div>
+          <div class="sc-prop-seg" id="propSeg-2" style="background:#FFD166;width:0%"></div>
+        </div>
+      </div>
+      <div class="gc task-panel">
+        <div class="tp-title">教学任务</div>
+        <div class="task-list" id="taskList"></div>
+      </div>
+    </div>
+
+    <!-- Center -->
+    <div class="cp">
+      <div class="mods-row" id="modsRow"></div>
+      <div class="gc chart-panel">
+        <div class="cp-head">
+          <div class="cp-head-title" id="chartTitle">各模块总分成长趋势</div>
+          <div class="cp-legend" id="chartLegend"></div>
+        </div>
+        <div class="chart-area"><canvas id="mainChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="gc rp">
+      <div class="rp-title">维 度 详 情 · 雷达 + 热力</div>
+      <div class="radar-area"><canvas id="radarChart"></canvas></div>
+      <div class="heatmap-area">
+        <canvas id="heatmapCanvas"></canvas>
+        <div class="heatmap-legend" id="heatmapLegend">
+          <span class="hm-leg-label">低</span>
+          <div class="hm-leg-strip" id="hmLegStrip"></div>
+          <span class="hm-leg-label">高</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════ DATA ══════ */
+const TASKS = [
+  { name:'组团',    full:'团队组建 立IP'   },
+  { name:'选品',    full:'数据分析选产品'  },
+  { name:'脚本',    full:'脚本撰写排流程'  },
+  { name:'视频',    full:'视频制作引流量'  },
+  { name:'策划',    full:'营销策划聚人气'  },
+  { name:'开场结尾', full:'开场结尾控节奏' },
+  { name:'促单转化', full:'促单转化提销量' },
+  { name:'数据复盘', full:'数据复盘优策略' },
+];
+
+// [理论知识(15), 课中任务(15), 直播设计(20), 直播实操(30), AI工具(10), 文化创新(10)]
+const SCORES = [
+  [8,  7,  10,  8,  4, 3],
+  [9,  8,  11, 12,  5, 4],
+  [10, 9,  12, 15,  6, 5],
+  [11, 10, 14, 17,  7, 6],
+  [12, 11, 15, 20,  7, 7],
+  [12, 12, 16, 22,  8, 7],
+  [13, 13, 17, 25,  8, 8],
+  [15, 15, 19, 29,  9, 9],
+];
+
+const DIMS = [
+  { name:'理论知识掌握',  max:15, mod:0 },
+  { name:'课中任务完成',  max:15, mod:0 },
+  { name:'直播设计能力',  max:20, mod:1 },
+  { name:'直播实操变现',  max:30, mod:1 },
+  { name:'AI工具创新应用', max:10, mod:2 },
+  { name:'文化与创新成果', max:10, mod:2 },
+];
+
+const MODS = [
+  { name:'基础达标', tag:'模块一', max:30, icon:'🎯',
+    color:'#06D6A0', glow:'rgba(6,214,160,0.18)',   bg:'rgba(6,214,160,0.1)',   dims:[0,1],
+    chartType:'bar',
+    chartHint:'8任务 · 柱状对比' },
+  { name:'能力提级', tag:'模块二', max:50, icon:'🚀',
+    color:'#4895EF', glow:'rgba(72,149,239,0.18)',  bg:'rgba(72,149,239,0.1)',  dims:[2,3],
+    chartType:'polarArea',
+    chartHint:'8任务 · 极坐标分布' },
+  { name:'应用创新', tag:'模块三', max:20, icon:'✨',
+    color:'#FFD166', glow:'rgba(255,209,102,0.18)', bg:'rgba(255,209,102,0.1)', dims:[4,5],
+    chartType:'doughnut',
+    chartHint:'当前任务 · 构成分析' },
+];
+
+const DIM_COLORS = ['#06D6A0','#06D6A0','#4895EF','#4895EF','#FFD166','#FFD166'];
+const DIM_BGS    = [0,0,1,1,2,2].map(i => MODS[i].bg);
+const DIM_TAGS   = ['模块一','模块一','模块二','模块二','模块三','模块三'];
+
+// Module colors for segments (hex without #)
+const MOD_SEG_COLORS = ['#06D6A0', '#4895EF', '#FFD166'];
+const MOD_MAXES = [30, 50, 20]; // sum = 100
+
+const R = 33, CIRC = 2 * Math.PI * R;
+
+// 各维度跨所有任务的均值（用于总览模式）
+const AVG_SCORES = DIMS.map((d, di) =>
+  Math.round(SCORES.reduce((sum, s) => sum + s[di], 0) / SCORES.length)
+);
+
+let curTask   = -1;   // -1 = 总览模式
+let curModule = -1;
+let mainChart = null;
+const miniCharts = [null, null, null];
+
+/* ══════ BG ══════ */
+function initBg() {
+  const cv = document.getElementById('bgCanvas');
+  const cx = cv.getContext('2d');
+  const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  resize(); window.addEventListener('resize', resize);
+  const pts = Array.from({length:70}, () => ({
+    x: Math.random()*innerWidth, y: Math.random()*innerHeight,
+    r: Math.random()*1.4+0.3,
+    vx: (Math.random()-0.5)*0.18, vy: (Math.random()-0.5)*0.18,
+    a: Math.random()*0.45+0.1,
+  }));
+  (function draw() {
+    cx.clearRect(0,0,cv.width,cv.height);
+    pts.forEach(p => {
+      p.x = (p.x+p.vx+cv.width)%cv.width;
+      p.y = (p.y+p.vy+cv.height)%cv.height;
+      cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      cx.fillStyle = `rgba(129,140,248,${p.a})`; cx.fill();
+    });
+    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++) {
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+      if (d<90) {
+        cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y);
+        cx.strokeStyle=`rgba(129,140,248,${0.07*(1-d/90)})`; cx.lineWidth=0.6; cx.stroke();
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+}
+
+/* ══════ CLOCK ══════ */
+function initClock() {
+  const DAYS = ['日','一','二','三','四','五','六'];
+  const tick = () => {
+    const n = new Date();
+    document.getElementById('clock').textContent =
+      [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+    document.getElementById('dateStr').textContent =
+      `${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日 · 星期${DAYS[n.getDay()]}`;
+  };
+  tick(); setInterval(tick,1000);
+}
+
+/* ══════ STACKED BAR helpers ══════ */
+function calcModScores(taskIdx) {
+  const s = SCORES[taskIdx];
+  return MODS.map(m => m.dims.reduce((a,di)=>a+s[di],0));
+}
+
+function updateStackedBars(taskIdx) {
+  const modScores = calcModScores(taskIdx);
+  const total = modScores.reduce((a,b)=>a+b,0) || 1;
+
+  // Update task list mini 3-segment bars
+  TASKS.forEach((_,ti) => {
+    const ts = SCORES[ti];
+    const tTotal = ts.reduce((a,b)=>a+b,0) || 1;
+    const tMod = MODS.map(m => m.dims.reduce((a,di)=>a+ts[di],0));
+    MODS.forEach((_,mi) => {
+      const seg = document.getElementById(`ti-seg-${ti}-${mi}`);
+      if (seg) seg.style.width = (tMod[mi]/tTotal*100)+'%';
+    });
+  });
+
+  // Update score card stacked proportion bar
+  MODS.forEach((_,mi) => {
+    const seg = document.getElementById('propSeg-'+mi);
+    if (seg) seg.style.width = (modScores[mi]/100*100)+'%';
+  });
+}
+
+/* ══════ BUILD UI ══════ */
+function buildTasks() {
+  const el = document.getElementById('taskList');
+  TASKS.forEach((t,i) => {
+    const ts = SCORES[i];
+    const total = ts.reduce((a,b)=>a+b,0);
+    const tMod = MODS.map(m => m.dims.reduce((a,di)=>a+ts[di],0));
+    const tTotal = total || 1;
+
+    const d = document.createElement('div');
+    d.className='task-item'; d.id='ti-'+i; d.onclick=()=>selectTask(i);
+
+    // Build 3 colored segments
+    const segsHtml = MODS.map((m,mi) =>
+      `<div class="ti-seg" id="ti-seg-${i}-${mi}" style="background:${m.color};width:${tMod[mi]/tTotal*100}%;opacity:0.75"></div>`
+    ).join('');
+
+    d.innerHTML=`
+      <div class="ti-num">${i+1}</div>
+      <div class="ti-body">
+        <div class="ti-name">${t.name}</div>
+        <div class="ti-bar">${segsHtml}</div>
+      </div>
+      <div class="ti-score">${total}</div>`;
+    el.appendChild(d);
+  });
+}
+
+function buildMods() {
+  const row = document.getElementById('modsRow');
+  MODS.forEach((m,mi) => {
+    const el = document.createElement('div');
+    el.className='mod-card'; el.id='mc-'+mi;
+    el.style.cssText=`--mc:${m.color};--mg:${m.glow}`;
+    el.onclick=()=>selectMod(mi);
+
+    const dimRows = m.dims.map(di=>`
+      <div class="mdr">
+        <div class="mdr-name">${DIMS[di].name}</div>
+        <div class="mdr-score" id="mdr-${di}">0</div>
+        <div class="mdr-bar"><div class="mdr-fill" id="mdrb-${di}" style="width:0%"></div></div>
+      </div>`).join('');
+
+    // bar chart gets full-width wrapper; polar/doughnut get square wrapper
+    const wrapClass = m.chartType === 'bar' ? 'mc-bar-wrap' : 'mc-sq-wrap';
+
+    el.innerHTML=`
+      <div class="mod-hd"><span class="mod-icon">${m.icon}</span><span class="mod-name">${m.name}</span></div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <circle class="r-bg"   cx="40" cy="40" r="${R}"/>
+          <circle class="r-fill" id="ring-${mi}" cx="40" cy="40" r="${R}"
+            stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-score" id="rs-${mi}">0</div>
+          <div class="ring-max">/ ${m.max}</div>
+        </div>
+      </div>
+      <div class="ring-trend" id="rt-${mi}">↑ 成长</div>
+      <div class="mod-tag">${m.tag}</div>
+      <div class="mc-chart-hint">${m.chartHint}</div>
+      <div class="${wrapClass}"><canvas id="mcc-${mi}"></canvas></div>
+      <div class="mod-dims">${dimRows}</div>`;
+    row.appendChild(el);
+  });
+}
+
+let radarInst = null;
+
+/* ══════ RADAR SCORE LABELS PLUGIN ══════ */
+const radarScoreLabelPlugin = {
+  id: 'radarScoreLabels',
+  afterDraw(chart) {
+    if (chart.config.type !== 'radar') return;
+    const { ctx, scales } = chart;
+    const scale = scales.r;
+    if (!scale) return;
+
+    const dataset = chart.data.datasets[0];
+    const rawData = dataset.data; // percentage values 0-100
+    const labels = chart.data.labels;
+    const count = labels.length;
+    const centerX = scale.xCenter;
+    const centerY = scale.yCenter;
+
+    ctx.save();
+    ctx.font = 'bold 9px -apple-system,PingFang SC,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i < count; i++) {
+      const angle = scale.getIndexAngle(i) - Math.PI / 2;
+      const r = scale.getDistanceFromCenterForValue(rawData[i]);
+
+      // Place label slightly beyond the data point
+      const offsetR = r + 12;
+      const x = centerX + offsetR * Math.cos(angle);
+      const y = centerY + offsetR * Math.sin(angle);
+
+      const di = i;
+      const s = curTask >= 0 ? SCORES[curTask] : AVG_SCORES;
+      const taskScore = s[di];
+      const dimMax = DIMS[di].max;
+      const labelText = `${taskScore}/${dimMax}`;
+
+      // Background pill
+      const tw = ctx.measureText(labelText).width;
+      ctx.fillStyle = 'rgba(8,12,40,0.75)';
+      ctx.beginPath();
+      ctx.roundRect(x - tw/2 - 3, y - 7, tw + 6, 14, 3);
+      ctx.fill();
+
+      ctx.fillStyle = DIM_COLORS[di];
+      ctx.fillText(labelText, x, y);
+    }
+    ctx.restore();
+  }
+};
+
+// ── Heatmap helpers ──
+function hexToRGBA(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const DIM_ABBR = ['理论','课中','设计','实操','AI','文化'];
+
+function buildHeatmapLegend() {
+  // Build a mixed gradient legend strip using the 3 module colors
+  const strip = document.getElementById('hmLegStrip');
+  if (!strip) return;
+  // Use the predominant heatmap color (blended across dims)
+  strip.style.background = `linear-gradient(90deg, rgba(6,214,160,0.12) 0%, rgba(72,149,239,0.45) 40%, rgba(255,209,102,0.9) 100%)`;
+}
+
+function drawHeatmap(taskIdx) {
+  const canvas = document.getElementById('heatmapCanvas');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  // Leave room for the legend strip below (approx 20px)
+  const legendEl = document.getElementById('heatmapLegend');
+  const legendH = legendEl ? legendEl.offsetHeight + 4 : 20;
+  canvas.width  = parent.clientWidth;
+  canvas.height = parent.clientHeight - legendH;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const labelW = 46, labelH = 20;
+  const chartW = W - labelW, chartH = H - labelH;
+  const cw = chartW / 6;   // 6 dims as columns
+  const ch = chartH / 8;   // 8 tasks as rows
+
+  ctx.clearRect(0, 0, W, H);
+
+  TASKS.forEach((t, ti) => {
+    DIMS.forEach((d, di) => {
+      const score = SCORES[ti][di];
+      const pct   = score / d.max;
+      const alpha = 0.1 + pct * 0.78;
+      const x = labelW + di * cw, y = ti * ch;
+      const pad = 2;
+
+      // Cell fill
+      ctx.fillStyle = hexToRGBA(DIM_COLORS[di], alpha);
+      ctx.beginPath();
+      ctx.roundRect(x+pad, y+pad, cw-pad*2, ch-pad*2, 3);
+      ctx.fill();
+
+      // Highlight current task row
+      if (ti === taskIdx) {
+        ctx.strokeStyle = 'rgba(157,168,255,0.7)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(x+pad, y+pad, cw-pad*2, ch-pad*2, 3);
+        ctx.stroke();
+      }
+
+      // Score text
+      if (ch >= 14 && cw >= 16) {
+        ctx.fillStyle = pct > 0.55 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.45)';
+        ctx.font = `bold ${Math.min(cw*0.36, ch*0.44, 11)}px -apple-system,sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(score, x+cw/2, y+ch/2);
+      }
+    });
+
+    // Left label (task name)
+    ctx.fillStyle = ti === taskIdx ? '#9DA8FF' : '#475569';
+    ctx.font = `${ti===taskIdx?'bold ':''}10px -apple-system,sans-serif`;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(t.name, labelW-5, ti*ch+ch/2);
+  });
+
+  // Bottom labels (dim abbreviations, colored)
+  DIM_ABBR.forEach((abbr, di) => {
+    ctx.fillStyle = hexToRGBA(DIM_COLORS[di], 0.85);
+    ctx.font = 'bold 10px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(abbr, labelW + di*cw + cw/2, chartH+4);
+  });
+}
+
+function buildRadar() {
+  // Build radar chart with score label plugin
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const s = SCORES[0];
+  radarInst = new Chart(ctx, {
+    type: 'radar',
+    plugins: [radarScoreLabelPlugin],
+    data: {
+      labels: DIMS.map(d => d.name),
+      datasets: [{
+        label: '当前任务',
+        data: DIMS.map((d,di) => Math.round(s[di]/d.max*100)),
+        borderColor: '#9DA8FF',
+        backgroundColor: 'rgba(157,168,255,0.15)',
+        borderWidth: 2,
+        pointBackgroundColor: DIM_COLORS,
+        pointBorderColor: '#0C0F2E',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 500, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(8,12,32,0.92)',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+          titleColor: '#F1F5FF', bodyColor: '#7B8DB0', padding: 10,
+          callbacks: {
+            label: ctx => {
+              const di = ctx.dataIndex;
+              const s = curTask >= 0 ? SCORES[curTask] : AVG_SCORES;
+              return ` ${s[di]} / ${DIMS[di].max} 分 (${ctx.raw}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { display: false, stepSize: 25 },
+          grid: { color: 'rgba(255,255,255,0.08)' },
+          angleLines: { color: 'rgba(255,255,255,0.1)' },
+          pointLabels: {
+            color: '#7B8DB0', font: { size: 10, weight: '600' },
+            padding: 6,
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateRadar(taskIdx) {
+  const s = taskIdx >= 0 ? SCORES[taskIdx] : AVG_SCORES;
+  if (radarInst) {
+    radarInst.data.datasets[0].data = DIMS.map((d,di) => Math.round(s[di]/d.max*100));
+    radarInst.update();
+  }
+  drawHeatmap(taskIdx);
+}
+
+/* ══════ MINI CHARTS ══════ */
+function buildMiniCharts() {
+  MODS.forEach((m, mi) => {
+    const canvas = document.getElementById('mcc-'+mi);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const commonTooltip = {
+      backgroundColor:'rgba(8,12,32,0.92)',
+      borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+      titleColor:'#E2E8F0', bodyColor:'#94A3B8',
+      padding:8, callbacks:{ title: items=>`任务${Number(items[0].dataIndex)+1}：${TASKS[items[0].dataIndex].full}` }
+    };
+
+    if (mi === 0) {
+      // ── Module 0: Grouped Bar ──
+      const makeColors = (taskIdx, alpha1, alpha2) =>
+        TASKS.map((_,i) => i===taskIdx ? `${m.color}${alpha1}` : `${m.color}${alpha2}`);
+
+      miniCharts[0] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: TASKS.map(t=>t.name),
+          datasets: [
+            { label:'理论知识', data: SCORES.map(s=>s[0]),
+              backgroundColor: makeColors(0,'DD','44'),
+              borderColor: 'transparent', borderRadius:3, borderSkipped:false },
+            { label:'课中任务', data: SCORES.map(s=>s[1]),
+              backgroundColor: makeColors(0,'88','22'),
+              borderColor: 'transparent', borderRadius:3, borderSkipped:false },
+          ]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          animation:{ duration:400 },
+          plugins:{ legend:{ display:false }, tooltip: commonTooltip },
+          scales:{
+            x:{ grid:{display:false}, ticks:{color:'#475569',font:{size:9}}, border:{color:'transparent'} },
+            y:{ display:false, max:17, beginAtZero:true },
+          }
+        }
+      });
+
+    } else if (mi === 1) {
+      // ── Module 1: Polar Area ──
+      const taskTotals = SCORES.map(s => s[2]+s[3]);
+      const makePA = taskIdx => ({
+        data: taskTotals,
+        backgroundColor: TASKS.map((_,i) =>
+          i===taskIdx ? m.color+'CC' : m.color+'33'),
+        borderColor: TASKS.map((_,i) =>
+          i===taskIdx ? m.color : 'transparent'),
+        borderWidth: 2,
+      });
+
+      miniCharts[1] = new Chart(ctx, {
+        type:'polarArea',
+        data:{ labels: TASKS.map(t=>t.name), datasets:[makePA(0)] },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          animation:{ duration:400 },
+          plugins:{
+            legend:{ display:false },
+            tooltip:{ ...commonTooltip, callbacks:{ title:items=>`${TASKS[items[0].dataIndex].name}` } }
+          },
+          scales:{ r:{ display:false, beginAtZero:true } }
+        }
+      });
+
+    } else {
+      // ── Module 2: Doughnut ──
+      const s = SCORES[0];
+      miniCharts[2] = new Chart(ctx, {
+        type:'doughnut',
+        data:{
+          labels:['AI工具创新','文化与创新','待提升'],
+          datasets:[{
+            data:[ s[4], s[5], Math.max(0, 20-s[4]-s[5]) ],
+            backgroundColor:[ m.color+'CC', m.color+'77', 'rgba(255,255,255,0.05)' ],
+            borderColor:[ m.color, m.color+'88', 'rgba(255,255,255,0.06)' ],
+            borderWidth:1, hoverOffset:4,
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          cutout:'62%',
+          animation:{ duration:400 },
+          plugins:{
+            legend:{ display:false },
+            tooltip:{
+              backgroundColor:'rgba(8,12,32,0.92)',
+              borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+              titleColor:'#E2E8F0', bodyColor:'#94A3B8', padding:8
+            }
+          }
+        }
+      });
+    }
+  });
+}
+
+/* Update mini charts when task changes */
+function updateMiniCharts(taskIdx) {
+  // 总览模式用均值，否则用具体任务分数
+  const s = taskIdx >= 0 ? SCORES[taskIdx] : AVG_SCORES;
+
+  // Module 0: update highlight colors (总览模式全部等亮)
+  if (miniCharts[0]) {
+    const mkC = (a1,a2) => TASKS.map((_,i)=> taskIdx<0||i===taskIdx ? `${MODS[0].color}${a1}` : `${MODS[0].color}${a2}`);
+    miniCharts[0].data.datasets[0].backgroundColor = mkC('DD','44');
+    miniCharts[0].data.datasets[1].backgroundColor = mkC('88','22');
+    miniCharts[0].update('none');
+  }
+
+  // Module 1: update polar area highlight
+  if (miniCharts[1]) {
+    miniCharts[1].data.datasets[0].backgroundColor =
+      TASKS.map((_,i)=> taskIdx<0||i===taskIdx ? MODS[1].color+'CC' : MODS[1].color+'33');
+    miniCharts[1].data.datasets[0].borderColor =
+      TASKS.map((_,i)=> taskIdx<0||i===taskIdx ? MODS[1].color : 'transparent');
+    miniCharts[1].update('none');
+  }
+
+  // Module 2: update doughnut data
+  if (miniCharts[2]) {
+    miniCharts[2].data.datasets[0].data = [s[4], s[5], Math.max(0,20-s[4]-s[5])];
+    miniCharts[2].update();
+  }
+}
+
+/* ══════ SELECT TASK ══════ */
+function selectTask(idx) {
+  // 取消上一个任务高亮
+  if (curTask >= 0) document.getElementById('ti-'+curTask).classList.remove('active');
+  curTask = idx;
+  if (idx >= 0) document.getElementById('ti-'+idx).classList.add('active');
+
+  // 决定使用的分数：-1 = 总览均值
+  const s     = idx >= 0 ? SCORES[idx] : AVG_SCORES;
+  const total = s.reduce((a,b) => a+b, 0);
+
+  // 标题行
+  const hdrTask = document.getElementById('hdrTask');
+  if (hdrTask) hdrTask.textContent = idx >= 0 ? `当前任务：${TASKS[idx].full}` : '总览模式 · 综合均值';
+
+  countUp('totalScore', total);
+  document.getElementById('scStage').textContent =
+    idx < 0  ? '📊 综合总览'
+    : total < 55 ? '🌱 新手阶段' : total < 80 ? '⚡ 熟手成长' : '🏆 能手水平';
+
+  MODS.forEach((m,mi) => {
+    const sc = m.dims.reduce((a,di)=>a+s[di],0);
+    countUp('rs-'+mi, sc);
+    document.getElementById('ring-'+mi).style.strokeDashoffset = CIRC*(1-sc/m.max);
+    m.dims.forEach(di => {
+      document.getElementById('mdr-'+di).textContent = s[di];
+      document.getElementById('mdrb-'+di).style.width = (s[di]/DIMS[di].max*100)+'%';
+    });
+    // update score card module breakdown
+    countUp('smv-'+mi, sc);
+    document.getElementById('smbar-'+mi).style.width = (sc/m.max*100)+'%';
+  });
+
+  // Update stacked proportion bar in score card
+  const modScores = MODS.map(m => m.dims.reduce((a,di)=>a+s[di],0));
+  MODS.forEach((_,mi) => {
+    const seg = document.getElementById('propSeg-'+mi);
+    if (seg) seg.style.width = (modScores[mi]/100*100)+'%';
+  });
+
+  updateRadar(idx);
+  updateMiniCharts(idx);
+  renderMainChart(curModule);
+}
+
+/* ══════ SELECT MODULE ══════ */
+function selectMod(mi) {
+  if (curModule === mi) {
+    document.getElementById('mc-'+mi).classList.remove('active');
+    curModule = -1;
+  } else {
+    if (curModule>=0) document.getElementById('mc-'+curModule).classList.remove('active');
+    curModule = mi;
+    document.getElementById('mc-'+mi).classList.add('active');
+  }
+  renderMainChart(curModule);
+}
+
+/* ══════ MAIN CHART ══════ */
+function renderMainChart(mi) {
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  const labels = TASKS.map(t=>t.name);
+  let datasets, title, legendData;
+
+  if (mi < 0) {
+    // All 3 module totals — line chart with fill + gradient
+    datasets = MODS.map(m => {
+      // Create gradient fill for each module
+      const gradientFill = ctx.createLinearGradient(0, 0, 0, 200);
+      gradientFill.addColorStop(0, m.color + '55');
+      gradientFill.addColorStop(1, m.color + '00');
+      return {
+        label: m.name,
+        data: SCORES.map(s=>m.dims.reduce((a,di)=>a+s[di],0)),
+        borderColor: m.color,
+        backgroundColor: gradientFill,
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: m.color,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 9,
+      };
+    });
+    title = '各模块总分成长趋势';
+    legendData = MODS.map(m=>({ label:m.name, color:m.color }));
+  } else {
+    const m = MODS[mi];
+    // Two sub-dimensions — area line chart
+    datasets = m.dims.map((di,idx)=>({
+      label: DIMS[di].name,
+      data: SCORES.map(s=>s[di]),
+      borderColor: m.color,
+      backgroundColor: idx===0 ? m.glow : m.glow.replace('0.18','0.06'),
+      borderWidth: 2.5,
+      borderDash: idx===1 ? [5,3] : [],
+      tension: 0.4,
+      fill: idx===0,
+      pointBackgroundColor: m.color,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 6,
+      pointHoverRadius: 9,
+    }));
+    title = `${m.name} · 维度分析趋势`;
+    legendData = m.dims.map(di=>({ label:DIMS[di].name, color:m.color }));
+  }
+
+  document.getElementById('chartTitle').textContent = title;
+  document.getElementById('chartLegend').innerHTML = legendData.map(l=>
+    `<div class="cp-leg"><div class="cp-leg-dot" style="background:${l.color}"></div>${l.label}</div>`
+  ).join('');
+
+  const tidx = curTask;
+  const lineCol = mi>=0 ? MODS[mi].color+'66' : 'rgba(129,140,248,0.45)';
+
+  mainChart = new Chart(ctx, {
+    type:'line', data:{labels,datasets},
+    plugins:[{
+      id:'vline',
+      afterDraw(chart) {
+        if (tidx < 0) return;   // 总览模式不画当前任务线
+        const {ctx:c,chartArea:ca,scales} = chart;
+        const x = scales.x.getPixelForValue(tidx);
+        if (!isFinite(x)) return;
+        c.save();
+        c.beginPath(); c.moveTo(x,ca.top); c.lineTo(x,ca.bottom);
+        c.strokeStyle=lineCol; c.lineWidth=1.5; c.setLineDash([5,4]); c.stroke();
+        c.fillStyle=lineCol; c.font='11px PingFang SC,sans-serif';
+        c.textAlign='center'; c.setLineDash([]);
+        c.fillText('▼ 当前',x,ca.top-5);
+        c.restore();
+      }
+    }],
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:480,easing:'easeOutQuart'},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(8,12,32,0.92)',
+          borderColor:'rgba(129,140,248,0.28)', borderWidth:1,
+          titleColor:'#E2E8F0', bodyColor:'#94A3B8', padding:12,
+          callbacks:{ title:items=>`任务${items[0].dataIndex+1}：${TASKS[items[0].dataIndex].full}` }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#475569',font:{size:12}}, border:{color:'rgba(255,255,255,0.06)'} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#475569',font:{size:11}}, border:{color:'transparent'}, beginAtZero:true }
+      },
+      interaction:{mode:'index',intersect:false}
+    }
+  });
+}
+
+/* ══════ COUNT UP ══════ */
+function countUp(id, to, dur=400) {
+  const el = document.getElementById(id);
+  const from = parseInt(el.textContent)||0;
+  if (from===to) return;
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now-t0)/dur,1);
+    el.textContent = Math.round(from+(to-from)*(1-Math.pow(1-p,3)));
+    if (p<1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ══════ INIT ══════ */
+initBg();
+initClock();
+buildTasks();
+buildMods();
+buildRadar();
+buildHeatmapLegend();
+// Build mini charts after DOM is ready
+setTimeout(() => {
+  buildMiniCharts();
+  selectTask(-1);   // 默认总览模式
+  renderMainChart(-1);
+}, 0);
+</script>
+</body>
+</html>
